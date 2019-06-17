@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>网络流量监控</title>
+    <link rel="stylesheet" type="text/css" href="css/analysis.css">
+    <link rel="stylesheet" type="text/css" href="css/toastr.css">
+    <script src="js/jquery.js"></script>
+    <script src="js/toastr.js"></script>
+
+
+</head>
+
+<body>
+<div class="top">
+    <div class="top-title">
+        <ul class="tabs group" id="Tabs">
+            <li style="width: 1000px"><a class="active">暂无网卡信息</a></li>
+        </ul>
+
+        <div id="content">
+            <div id="instruction"></div>
+        </div>
+
+        <div class="start-btn">
+            <input type="button" id="start" value="开始" disabled="disabled">
+            <input type="button" id="end" value="停止" disabled="disabled">
+
+            <ul class="Switch">
+                <li id="blance-title">
+                    <input type="checkbox"  id="blance" disabled="disabled"/>
+                    混杂模式
+                    <label for="blance"><em></em></label>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+
+<div id="top-charts">
+    <div class="charts" id="chart1"></div>
+    <div class="charts" id="chart2"></div>
+</div>
+<div id="center-charts">
+    <div class="charts" id="chart3"></div>
+    <div class="charts" id="chart4"></div>
+</div>
+<div id="bottom-charts">
+    <div class="charts" id="chart5"></div>
+    <div class="charts" id="chart6"></div>
+</div>
+<div id="warn">
+    <span id="warn-title">警告列表</span>
+    <div id="warn-list">
+    </div>
+</div>
+
+
+</body>
+<script src="js/echarts.js"></script>
+<script src="js/server.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/analysis.js"></script>
+</html>
