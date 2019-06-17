@@ -94,6 +94,7 @@ public class PacketHandler {
                 packetNumKind[i] = 0;
                 packetLenKind[i] = 0;
             }
+            warnPacketList.clear();
             return true;
         } else {
             return false;
@@ -102,6 +103,8 @@ public class PacketHandler {
 
     //返回可疑数据包列表
     public List<myPacket> getWarnPacketList(int offset) {
+        if(offset>warnPacketList.size())
+            return null;
         return warnPacketList.subList(offset,warnPacketList.size());
     }
 

@@ -320,7 +320,8 @@ function showARP(wp, ptime) {
                 时间：<span>${ptime}</span>
             </div>
             <div>
-                 源地址：<span>${wp.packet.senderHardwareAddress}</span>  &nbsp;&nbsp;目的地址：<span>${wp.packet.targetHardwareAddress}</span>
+                 源地址：<span>${wp.packet.senderHardwareAddress+'/'+wp.packet.senderProtocolAddress}</span>  
+                 &nbsp;&nbsp;目的地址：<span>${wp.packet.targetHardwareAddress+'/'+wp.packet.targetProtocolAddress}</span>
             </div>
             ${htmlstr}
             <div>警告信息：<span>${wp.warningMsg}</span></div>
