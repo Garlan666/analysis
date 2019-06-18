@@ -24,6 +24,7 @@ public class PacketChecker extends Thread {
     private InetAddress inetAddress;//本机网络信息
     private Map<String, String> ARPChart = new HashMap();//HashMap摸拟ARP表
     private timeQueue tcptimequeue;
+    private timeQueue udpTimeQueue;
     private int flevel=50;   //syn报文正常参考数量
     private double a=0.5;    //平滑参数
 
@@ -153,14 +154,22 @@ public class PacketChecker extends Thread {
     }
 
     private void UDPChecker(UDPPacket udpPacket) {
-//        mp.setProtocol(2);
-//        PacketHandler.catchWarn(mp);
+        udpTimeQueue.add(udpPacket.sec);
+        int f2=udpTimeQueue.average();
+        if((a*udpTimeQueue.last()+(1-a)*flevel)/f2>=2){
+        mp.setProtocol(2);
+        mp.setWarningMsg("当前时段收到的UDP类型的数据包过多，疑似遭遇UDP洪流攻击");
+        PacketHandler.catchWarn(mp);
+        }
     }
 
 
     private void ICMPChecker(ICMPPacket icmpPacket) {
-//        mp.setProtocol(3);
-//        PacketHandler.catchWarn(mp);
+        if(icmpPacket.len>65535){
+            mp.setProtocol(3);
+            mp.setWarningMsg("收到一个异常的ICMP报文，有可能遭遇“死亡之ping”攻击");
+            PacketHandler.catchWarn(mp);
+        }
     }
 
     private void ARPChecker(ARPPacket arpPacket) {
