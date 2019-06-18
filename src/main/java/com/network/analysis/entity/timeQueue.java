@@ -8,7 +8,7 @@ import java.util.Queue;
  */
 public class timeQueue {
     private int[] queue;
-    private int maxLen = 0;   //数组长度
+    private int maxLen = 0;   //数组长度,使用时maxLen-1应为历史长度
     private long startTime = 0;
     private int space = 0;   //间隙
 
@@ -25,10 +25,10 @@ public class timeQueue {
         if (this.startTime == 0) {
             this.startTime = time;
         }
-        if (time - startTime < maxLen * startTime) {
+        if (time - startTime < maxLen * space) {
             int d = (int) ((time - startTime) / space);
             queue[d]++;
-        } else if (time - startTime < maxLen * startTime * 2) {
+        } else if (time - startTime < maxLen * space * 2) {
             int d = (int) ((time - startTime) / space) - maxLen + 1;
             for (int i = 0; i < maxLen; i++) {
                 if ((i + d) < maxLen) {
@@ -51,10 +51,14 @@ public class timeQueue {
 
     public int average(){
         int sum=0;
-        for (int i=0;i<this.maxLen;i++){
+        for (int i=0;i<this.maxLen-1;i++){
             sum+=queue[i];
         }
         return sum/maxLen;
+    }
+
+    public int last(){
+        return queue[maxLen-1];
     }
 
 }

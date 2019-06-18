@@ -1,12 +1,14 @@
 package com.network.analysis.catchPacket;
 
 import com.network.analysis.entity.myPacket;
+import com.network.analysis.entity.timeQueue;
 import jpcap.packet.*;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -21,9 +23,13 @@ public class PacketChecker extends Thread {
     private myPacket mp;
     private InetAddress inetAddress;//本机网络信息
     private Map<String, String> ARPChart = new HashMap();//HashMap摸拟ARP表
+    private timeQueue tcptimequeue;
+
 
     @Override
     public void run() {
+        init();
+
         while (true) {//轮询队列是否为空
             while (!packets.isEmpty()) {
                 check(packets.poll());
@@ -38,6 +44,11 @@ public class PacketChecker extends Thread {
             }
         }
     }
+
+    private void init(){
+        tcptimequeue=new timeQueue(6,2);
+    }
+
 
     public void setInetAddress(InetAddress inetAddress) {
         this.inetAddress = inetAddress;
@@ -90,7 +101,41 @@ public class PacketChecker extends Thread {
         packets.offer(packet);
     }
 
-    private void TCPChecker(TCPPacket tcpPacket) {
+    private static class IpTime {
+        Queue<Long> queue = new LinkedList<>();
+    }
+
+    HashMap<String, IpTime> map = new HashMap<>();
+
+
+    public void TCPChecker(TCPPacket tcpPacket) {
+
+        if (tcpPacket.syn) {
+            tcptimequeue.add(tcpPacket.sec);
+            int f=tcptimequeue.average();
+            if(tcptimequeue.last()/f>=2) {
+                mp.setProtocol(1);
+                mp.setWarningMsg("当前时段SYN请求过多，疑似DDos攻击");
+                PacketHandler.catchWarn(mp);
+            }
+            if (map.containsKey(tcpPacket.src_ip.toString())) {
+                IpTime iptime = map.get(tcpPacket.src_ip.toString());
+                iptime.queue.offer(tcpPacket.sec);
+                if (iptime.queue.size() >= 60) iptime.queue.poll();
+                if (tcpPacket.sec - iptime.queue.peek() < 3) {
+                    //syn洪流报警
+                    mp.setProtocol(1);
+                    mp.setWarningMsg("此IP的SYN请求过多，疑似SYN洪流攻击");
+                    PacketHandler.catchWarn(mp);
+                }
+                map.put(tcpPacket.src_ip.toString(), iptime);
+            } else {
+                IpTime iptime = new IpTime();
+                iptime.queue = new LinkedList<>();
+                iptime.queue.offer(tcpPacket.sec);
+                map.put(tcpPacket.src_ip.toString(), iptime);
+            }
+        }
 //        mp.setProtocol(1);
 //        PacketHandler.catchWarn(mp);
     }
