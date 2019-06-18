@@ -45,7 +45,7 @@ function init() {
                 <div><span>链路：${interfaceList[id].datalink_description +'&nbsp;&nbsp;'+ interfaceList[id].datalink_name}</span></div>
                 <div><span>地址：</br>${interfaceList[id].address}</span></div>
                 `);
-                }, 200)
+                }, 200);
                 $('#instruction').fadeIn(300);
 
                 if (ifFresh) {
