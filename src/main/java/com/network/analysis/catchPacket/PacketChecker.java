@@ -154,7 +154,7 @@ public class PacketChecker extends Thread {
         long refreshtime=0;//上次刷新时间
 //        int min=400;
     }
-
+    private int max=0;
     HashMap<String, IpTime> tcpmap = new HashMap<>();
     HashMap<String, IpTime> udpMap = new HashMap<>();
     //每10分钟检查一次tcpmap，如果存在iptime 10分钟未刷新，删除键值对,清空ipqueue和ipport
@@ -164,8 +164,10 @@ public class PacketChecker extends Thread {
             public void run() {
                 while (true) {
                     for (Map.Entry<String,IpTime> entry : tcpmap.entrySet()) {
-                        if(entry.getValue().refreshtime-entry.getValue().createtime>=timeInterval)
+                        if(entry.getValue().refreshtime-entry.getValue().createtime>=timeInterval) {
+                            entry.getValue().ipqueue=null;
                             tcpmap.remove(entry.getKey());
+                        }
                     }
                     try {
                         Thread.sleep(timeInterval);
@@ -180,7 +182,7 @@ public class PacketChecker extends Thread {
 
 
     public void TCPChecker(TCPPacket tcpPacket) {
-        if (ifContain(tcpPacket.dst_ip.toString())) {
+        if (ifContain(tcpPacket.dst_ip.toString())&&!tcpPacket.src_ip.toString().equals("/202.38.193.65")) {
             if (tcpPacket.syn) {
                 if (tcpPacket.src_ip == tcpPacket.dst_ip) {
                     mp.setProtocol(1);
@@ -224,7 +226,8 @@ public class PacketChecker extends Thread {
                 for (Map.Entry<Integer,Long> entry : iptime.ipport.entrySet()) {
                     if(tcpPacket.sec-entry.getValue()>=5*60*60)iptime.ipport.remove(entry.getKey());
                 }
-                System.out.println(tcpPacket.src_ip+" "+tcpPacket.dst_port);
+                if(iptime.ipport.size()>max)max=iptime.ipport.size();
+                System.out.println(tcpPacket.src_ip+" "+tcpPacket.dst_port+" "+iptime.ipport.size()+" "+max);
             }
             if ((tcpPacket.fin&&tcpPacket.urg&&tcpPacket.psh)||(tcpPacket.fin && tcpPacket.syn) || (!tcpPacket.syn && !tcpPacket.fin && !tcpPacket.ack && !tcpPacket.psh && !tcpPacket.rst && !tcpPacket.urg)) {
                 mp.setProtocol(1);
