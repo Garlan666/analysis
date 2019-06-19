@@ -166,6 +166,10 @@ public class PacketChecker extends Thread {
                             tcpmap.remove(entry.getKey());
                         }
                     }
+                    for (Map.Entry<String,IpTime> entry : udpMap.entrySet()) {
+                        if(entry.getValue().refreshtime-entry.getValue().createtime>=timeInterval)
+                            udpMap.remove(entry.getKey());
+                    }
                     try {
                         Thread.sleep(timeInterval);
                     } catch (InterruptedException e) {
@@ -237,15 +241,45 @@ public class PacketChecker extends Thread {
 
     private void UDPChecker(UDPPacket udpPacket) {
         if (ifContain(udpPacket.dst_ip.toString())){
-            
+            if (udpPacket.src_ip == udpPacket.dst_ip) {
+                mp.setProtocol(2);
+                mp.setWarningMsg("此报文源IP与目的IP相同，疑似Land攻击");
+                PacketHandler.catchWarn(mp);
+            }
+            udpTimeQueue.add(udpPacket.sec);
+            int f2 = udpTimeQueue.average();
+            if (udpTimeQueue.last() / (a * f2 + (1 - a) * flevel) >= 2) {
+                mp.setProtocol(2);
+                mp.setWarningMsg("当前时段收到的UDP数据包过多，疑似DDos攻击");
+                PacketHandler.catchWarn(mp);
+            }
+            IpTime udpiptime = new IpTime();
+            if (udpMap.containsKey(udpPacket.src_ip.toString())) {
+                udpiptime.refreshtime=udpPacket.sec;
+                udpiptime = udpMap.get(udpPacket.src_ip.toString());
+                udpiptime.ipqueue.offer(udpPacket.sec);
+                //iptime.ipport.put(new Integer(tcpPacket.dst_port),tcpPacket.sec);
+                if (udpiptime.ipqueue.size() > 250) {
+                    udpiptime.ipqueue.poll();
+//                        if(tcpPacket.sec-iptime.ipqueue.peek()<iptime.min)iptime.min=(int)(tcpPacket.sec-iptime.ipqueue.peek());
+//                        System.out.println(tcpPacket.src_ip+" "+iptime.min);
+                    if (udpPacket.sec - udpiptime.ipqueue.peek() < 10) {
+                        //udp洪流报警
+                        mp.setProtocol(2);
+                        mp.setWarningMsg("来自此IP的UDP数据包过多，疑似UDP洪流攻击");
+                        PacketHandler.catchWarn(mp);
+                    }
+                }
+                udpMap.put(udpPacket.src_ip.toString(), udpiptime);
+            }
+            else {
+                //udpiptime.ipport.put(new Integer(tcpPacket.dst_port),tcpPacket.sec);
+                udpiptime.createtime=udpPacket.sec;
+                udpiptime.ipqueue = new LinkedList<>();
+                udpiptime.ipqueue.offer(udpPacket.sec);
+                udpMap.put(udpPacket.src_ip.toString(), udpiptime);
+            }
         }
-//        udpTimeQueue.add(udpPacket.sec);
-//        int f2=udpTimeQueue.average();
-//        if((a*udpTimeQueue.last()+(1-a)*flevel)/f2>=2){
-//        mp.setProtocol(2);
-//        mp.setWarningMsg("当前时段收到的UDP类型的数据包过多，疑似遭遇UDP洪流攻击");
-//        PacketHandler.catchWarn(mp);
-//        }
     }
 
 
