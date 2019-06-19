@@ -3,8 +3,6 @@ package com.network.analysis.catchPacket;
 import com.network.analysis.entity.myPacket;
 import com.network.analysis.entity.timeQueue;
 import com.sun.jmx.snmp.tasks.ThreadService;
-import jpcap.JpcapCaptor;
-import jpcap.JpcapSender;
 import jpcap.packet.*;
 
 import java.io.IOException;

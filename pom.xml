@@ -45,6 +45,13 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>jpcap</groupId>
+			<artifactId>jpcap</artifactId>
+			<version>0.5</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/jpcap.jar</systemPath>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -52,15 +59,6 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<executions>
-					<execution>
-						<goals>
-							<goal>
-								repackage
-							</goal>
-						</goals>
-					</execution>
-				</executions>
 				<configuration>
 					<includeSystemScope>true</includeSystemScope>
 				</configuration>
