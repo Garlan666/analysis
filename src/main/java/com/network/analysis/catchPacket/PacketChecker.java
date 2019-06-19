@@ -180,7 +180,7 @@ public class PacketChecker extends Thread {
         };
         new Thread(runnable).start();
     }
-
+int max=0;
 
     public void TCPChecker(TCPPacket tcpPacket) {
         if (ifContain(tcpPacket.dst_ip.toString())&&!tcpPacket.src_ip.toString().equals("/202.38.193.65")) {
@@ -226,6 +226,12 @@ public class PacketChecker extends Thread {
                 //ipport存入5分钟内试图连接的端口
                 for (Map.Entry<Integer,Long> entry : iptime.ipport.entrySet()) {
                     if(tcpPacket.sec-entry.getValue()>=5*60*60)iptime.ipport.remove(entry.getKey());
+                }
+                if(iptime.ipport.size()>max)max=iptime.ipport.size();
+                if(iptime.ipport.size()>=100){
+                    mp.setProtocol(1);
+                    mp.setWarningMsg("此IP在短时间内大量访问不同端口，疑似端口扫描");
+                    PacketHandler.catchWarn(mp);
                 }
             }
             if ((tcpPacket.fin&&tcpPacket.urg&&tcpPacket.psh)||(tcpPacket.fin && tcpPacket.syn) || (!tcpPacket.syn && !tcpPacket.fin && !tcpPacket.ack && !tcpPacket.psh && !tcpPacket.rst && !tcpPacket.urg)) {
