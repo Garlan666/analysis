@@ -10,6 +10,7 @@ import jpcap.JpcapCaptor;
 import jpcap.NetworkInterface;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -49,5 +50,22 @@ public class NetworkServerImpl implements NetworkServer {
 
     @Override
     public boolean packetAttack(int index, Attack attack){return packetServer.packetAttack(index,attack);}
+
+    @Override
+    public ArrayList<String>getWhiteList(){
+        return packetServer.getWhiteList();
+    }
+
+    @Override
+    public void addWhite(String ip){
+        packetServer.addWhite(ip);
+    }
+
+    @Override
+    public void removeWhite(String ip){
+        packetServer.removeWhite(ip);
+    }
+
+
 
 }

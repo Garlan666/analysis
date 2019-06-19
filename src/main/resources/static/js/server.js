@@ -76,7 +76,7 @@ function getWarningList(offset, ReturnFun) {
     });
 }
 
-function submit(json, ReturnFun) {
+function submit(json) {
     $.ajax({
         type: "POST",
         url: "/sys/network/packetAttack",
@@ -90,6 +90,49 @@ function submit(json, ReturnFun) {
                 toastr.warning('提交失败');
             }
         },
+        error: function (e) {
+            toastr.warning('提交失败');
+        }
+    });
+}
+
+
+function getWhite(json,ReturnFun) {
+    $.ajax({
+        type: "POST",
+        url: "/sys/network/getWhiteList",
+        contentType: 'application/x-www-form-urlencoded;charset=utf-8',
+        data: json,
+        dataType: 'json',
+        success: ReturnFun,
+        error: function (e) {
+            toastr.warning('获取失败');
+        }
+    });
+}
+
+function addWhite(json,ReturnFun) {
+    $.ajax({
+        type: "POST",
+        url: "/sys/network/addWhite",
+        contentType: 'application/x-www-form-urlencoded;charset=utf-8',
+        data: json,
+        dataType: 'json',
+        success: ReturnFun,
+        error: function (e) {
+            toastr.warning('提交失败');
+        }
+    });
+}
+
+function removeWhite(json,ReturnFun) {
+    $.ajax({
+        type: "POST",
+        url: "/sys/network/removeWhite",
+        contentType: 'application/x-www-form-urlencoded;charset=utf-8',
+        data: json,
+        dataType: 'json',
+        success: ReturnFun,
         error: function (e) {
             toastr.warning('提交失败');
         }

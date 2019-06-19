@@ -108,6 +108,19 @@ public class PacketHandler {
     }
 
 
+    public ArrayList<String> getWhiteList(){
+        return packetChecker.getWhiteList();
+    }
+
+    public void addWhite(String ip){
+        packetChecker.addWhiteList(ip);
+    }
+
+    public void removeWhite(String ip){
+        packetChecker.removeWhite(ip);
+    }
+
+
     public static void check(Packet packet) {
         packetChecker.addQueue(packet);//添加Packet进队列待检查
         synchronized (Lock.class) {

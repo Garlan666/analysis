@@ -6,6 +6,7 @@ import com.network.analysis.entity.PacketInfo;
 import com.network.analysis.entity.myPacket;
 import com.network.analysis.entity.netInterface;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -24,5 +25,11 @@ public interface NetworkServer {
     List<myPacket> getWarn(int offset);
 
     boolean packetAttack(int index, Attack attack);
+
+    ArrayList<String>getWhiteList();
+
+    void addWhite(String ip);
+
+    void removeWhite(String ip);
 
 }

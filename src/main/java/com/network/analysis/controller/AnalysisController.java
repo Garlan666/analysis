@@ -55,4 +55,18 @@ public class AnalysisController {
             return Return.SUCCESS;
         else return Return.SERVER_ERROR;
     }
+
+    @PostMapping(value = "getWhite")
+    public Return getWhite(){return new Return<>(networkServer.getWhiteList());}
+
+    @PostMapping(value = "addWhite")
+    public void addWhite(String ip){
+        networkServer.addWhite(ip);
+    }
+
+    @PostMapping(value = "removeWhite")
+    public void removeWhite(String ip){
+        networkServer.removeWhite(ip);
+    }
+
 }

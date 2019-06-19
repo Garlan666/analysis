@@ -25,6 +25,32 @@ public class PacketChecker extends Thread {
     private int flevel;   //syn报文正常参考数量
     private double a;    //平滑参数
 
+    private ArrayList<String>whiteList=new ArrayList<>();
+    public ArrayList<String>getWhiteList(){
+        return whiteList;
+    }
+    public void addWhiteList(String ip){
+        whiteList.add(ip);
+    }
+
+    public void removeWhite(String ip){
+        for(int i=0;i<whiteList.size();i++){
+            if(ip.equals(whiteList.get(i))){
+                whiteList.remove(i);
+                return;
+            }
+        }
+    }
+    private boolean ifInWhite(String ip){
+        for (int i = 0; i < whiteList.size(); i++) {
+            if (ip.equals("/" + whiteList.get(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
 
     @Override
     public void run() {

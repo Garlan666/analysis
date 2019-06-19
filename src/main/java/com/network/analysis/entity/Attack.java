@@ -56,7 +56,7 @@ public class Attack {
     }
 
     public String getSrcMac() {
-        return srcMac;
+        return srcMac.toLowerCase();
     }
 
     public void setSrcMac(String srcMac) {
@@ -72,7 +72,7 @@ public class Attack {
     }
 
     public String getDesMac() {
-        return desMac;
+        return desMac.toLowerCase();
     }
 
     public void setDesMac(String desMac) {

@@ -97,4 +97,16 @@ public class PacketServer {
         }
     }
 
+    public ArrayList<String> getWhiteList(){
+        return packetHandler.getWhiteList();
+    }
+
+    public void addWhite(String ip){
+        packetHandler.addWhite(ip);
+    }
+
+    public void removeWhite(String ip){
+        packetHandler.removeWhite(ip);
+    }
+
 }
