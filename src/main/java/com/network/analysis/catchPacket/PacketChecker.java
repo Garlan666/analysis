@@ -53,7 +53,6 @@ public class PacketChecker extends Thread {
         getInetAddress();
 
         for(int i=0;i<inetAddress.size();i++){
-            System.out.println(inetAddress.get(i).getHostAddress());
             ARPChart.put(inetAddress.get(i).getHostAddress(),getMACAddress(inetAddress.get(i)));
         }
 
@@ -224,7 +223,7 @@ public class PacketChecker extends Thread {
                 for (Map.Entry<Integer,Long> entry : iptime.ipport.entrySet()) {
                     if(tcpPacket.sec-entry.getValue()>=5*60*60)iptime.ipport.remove(entry.getKey());
                 }
-                System.out.println(tcpPacket.src_ip+" "+tcpPacket.dst_port);
+                //System.out.println(tcpPacket.src_ip+" "+tcpPacket.dst_port);
             }
             if ((tcpPacket.fin&&tcpPacket.urg&&tcpPacket.psh)||(tcpPacket.fin && tcpPacket.syn) || (!tcpPacket.syn && !tcpPacket.fin && !tcpPacket.ack && !tcpPacket.psh && !tcpPacket.rst && !tcpPacket.urg)) {
                 mp.setProtocol(1);
@@ -261,8 +260,10 @@ public class PacketChecker extends Thread {
 
     private void ARPChecker(ARPPacket arpPacket) {
         if (ARPChart.containsKey(arpPacket.getSenderProtocolAddress().toString())) {//如果ARP表中有记录
+
             if (!arpPacket.getSenderHardwareAddress().toString().equals(ARPChart.get(arpPacket.getSenderProtocolAddress().toString()))) {//如果包中的源MAC地址与表中记录的MAC地址不相同
-                if (!arpPacket.getSenderProtocolAddress().toString().equals("0.0.0.0")) {
+
+                if (!arpPacket.getSenderProtocolAddress().toString().equals("/0.0.0.0")) {
                     String target = "";
                     for (String key : ARPChart.keySet()) {//尝试查找对应IP
                         if (ARPChart.get(key).equals(arpPacket.getSenderHardwareAddress().toString())) {
