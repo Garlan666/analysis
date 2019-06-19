@@ -1,6 +1,7 @@
 package com.network.analysis.server;
 
 
+import com.network.analysis.entity.Attack;
 import com.network.analysis.entity.PacketInfo;
 import com.network.analysis.entity.myPacket;
 import com.network.analysis.entity.netInterface;
@@ -21,5 +22,7 @@ public interface NetworkServer {
     boolean stopCatch(int index);
 
     List<myPacket> getWarn(int offset);
+
+    boolean packetAttack(int index, Attack attack);
 
 }

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>网络流量发送</title>
+    <link rel="stylesheet" type="text/css" href="css/attack.css">
+    <link rel="stylesheet" type="text/css" href="css/toastr.css">
+    <script src="js/jquery.js"></script>
+    <script src="js/toastr.js"></script>
+
+
+</head>
+
+<body>
+
+<div class="content">
+    <div class="one">
+        <span>选择网卡：</span><select id="interface"></select>
+    </div>
+    <div class="one">
+        <span>数据包类型：</span>
+        <select id="packetType">
+            <option value="1">ARP请求</option>
+            <option value="2">ARP应答</option>
+            <option value="3">PING请求</option>
+            <option value="4">PING应答</option>
+            <option value="5">TCP</option>
+            <option value="6">UDP</option>
+        </select>
+    </div>
+    <div class="one" id="srcIp">源IP：<input class="srcIp">.<input class="srcIp">.<input class="srcIp">.<input class="srcIp"></div>
+    <div class="one" id="srcMac">源MAC：<input class="srcMac">-<input class="srcMac">-<input class="srcMac">-<input
+            class="srcMac">-<input class="srcMac">-<input class="srcMac"></div>
+    <div class="one" id="srcPort" style="display: none">源端口：<input class="srcPort"></div>
+    <div class="one" id="desIp">目的IP：<input class="desIp">.<input class="desIp">.<input class="desIp">.<input class="desIp"></div>
+    <div class="one" id="desMac" style="display: none">目的MAC：<input class="desMac">-<input class="desMac">-<input class="desMac">-<input
+            class="desMac">-<input class="desMac">-<input class="desMac"></div>
+    <div class="one" id="desPort" style="display: none">目的端口：<input class="desPort"></div>
+    <div class="one">轮数：<input id="round" value="1">&nbsp;&nbsp;每轮次数：<input id="speed" value="1">&nbsp;&nbsp;每轮暂停时间：<input id="sleep" value="0">ms</div>
+    <input type="button" id="submit" value="发送">
+</div>
+</body>
+<script src="js/server.js"></script>
+<script src="js/attack.js"></script>
+</html>

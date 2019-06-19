@@ -2,8 +2,11 @@ package com.network.analysis.catchPacket;
 
 import com.network.analysis.entity.myPacket;
 import com.network.analysis.entity.timeQueue;
+import jpcap.JpcapCaptor;
+import jpcap.JpcapSender;
 import jpcap.packet.*;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -174,11 +177,11 @@ public class PacketChecker extends Thread {
 
     private void ARPChecker(ARPPacket arpPacket) {
         if (ARPChart.containsKey(arpPacket.getSenderProtocolAddress().toString())) {//如果ARP表中有记录
-            if (!arpPacket.getSenderHardwareAddress().equals(ARPChart.get(arpPacket.getSenderProtocolAddress().toString()))) {//如果包中的源MAC地址与表中记录的MAC地址不相同
-                if (!arpPacket.getSenderProtocolAddress().equals("0.0.0.0")) {
+            if (!arpPacket.getSenderHardwareAddress().toString().equals(ARPChart.get(arpPacket.getSenderProtocolAddress().toString()))) {//如果包中的源MAC地址与表中记录的MAC地址不相同
+                if (!arpPacket.getSenderProtocolAddress().toString().equals("0.0.0.0")) {
                     String target = "";
                     for (String key : ARPChart.keySet()) {//尝试查找对应IP
-                        if (ARPChart.get(key).equals(arpPacket.getSenderHardwareAddress())) {
+                        if (ARPChart.get(key).equals(arpPacket.getSenderHardwareAddress().toString())) {
                             target = key;
                             break;
                         }
@@ -187,7 +190,7 @@ public class PacketChecker extends Thread {
                         target = "</br>表中MAC地址" + arpPacket.getSenderHardwareAddress() + "&nbsp;对应IP地址：" + target;
                     }
                     mp.setProtocol(4);
-                    mp.setWarningMsg("该ARP包中源IP地址与MAC地址和ARP表中记录不符,疑似ARP欺骗" + target);
+                    mp.setWarningMsg("该ARP包中源IP地址与MAC地址和ARP表中记录不符,疑似发生ARP欺骗" + target);
                     PacketHandler.catchWarn(mp);
                 }
             }

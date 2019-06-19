@@ -1,5 +1,6 @@
 package com.network.analysis.catchPacket;
 
+import com.network.analysis.entity.Attack;
 import com.network.analysis.entity.PacketInfo;
 import com.network.analysis.entity.myPacket;
 import com.network.analysis.entity.netInterface;
@@ -86,5 +87,16 @@ public class PacketServer {
 
     //返回可疑数据包列表
     public List<myPacket> getWarn(int offset) { return packetHandler.getWarnPacketList(offset); }
+
+
+    public boolean packetAttack(int index, Attack attack){
+        try {
+            new PacketSender(devices[index],attack).start();
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
 }

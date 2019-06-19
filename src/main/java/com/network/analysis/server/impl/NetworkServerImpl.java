@@ -1,6 +1,7 @@
 package com.network.analysis.server.impl;
 
 import com.network.analysis.catchPacket.PacketServer;
+import com.network.analysis.entity.Attack;
 import com.network.analysis.entity.PacketInfo;
 import com.network.analysis.entity.myPacket;
 import com.network.analysis.entity.netInterface;
@@ -45,5 +46,8 @@ public class NetworkServerImpl implements NetworkServer {
     public List<myPacket> getWarn(int offset) {
         return packetServer.getWarn(offset);
     }
+
+    @Override
+    public boolean packetAttack(int index, Attack attack){return packetServer.packetAttack(index,attack);}
 
 }

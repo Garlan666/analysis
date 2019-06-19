@@ -271,3 +271,20 @@ margin-top: 30px;
 #warn-list::-webkit-scrollbar-corner {
     background: #ebb816;
 }
+
+#attack{
+    border-radius: 40px;
+    height: 40px;
+    width: 100px;
+    border: 2px solid  #F89406;
+    outline: none;
+    background: #FFFFFF;
+    color: #F89406;
+    left: 500px;
+    cursor: pointer;
+    position: absolute;
+}
+#attack:hover{
+    color: #FFFFFF;
+    background: #F89406;
+}

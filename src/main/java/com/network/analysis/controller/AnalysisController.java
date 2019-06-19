@@ -1,5 +1,6 @@
 package com.network.analysis.controller;
 
+import com.network.analysis.entity.Attack;
 import com.network.analysis.entity.Return;
 import com.network.analysis.server.NetworkServer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,5 +46,13 @@ public class AnalysisController {
     @PostMapping(value = "getWarn")
     public Return getWarn(int offset){
         return new Return<>(networkServer.getWarn(offset));
+    }
+
+
+    @PostMapping(value = "packetAttack")
+    public Return packetAttack(int index, Attack attack){
+        if(networkServer.packetAttack(index,attack))
+            return Return.SUCCESS;
+        else return Return.SERVER_ERROR;
     }
 }

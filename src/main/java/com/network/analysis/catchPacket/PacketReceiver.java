@@ -52,14 +52,6 @@ public class PacketReceiver implements jpcap.PacketReceiver {
         }
         //是否地址转换协议请求包
         else if (packet instanceof jpcap.packet.ARPPacket) {
-//            ARPPacket p = (ARPPacket) packet;
-//            //Returns the hardware address (MAC address) of the sender
-//            Object saa = p.getSenderHardwareAddress();
-//            Object taa = p.getTargetHardwareAddress();
-//            String s = "* * * ARPPacket:| SenderHardwareAddress " + saa
-//                    + "|TargetHardwareAddress " + taa
-//                    + " |len: " + p.len;
-            //System.out.println(s);
             PacketHandler.packetNumKind[3]++;
             PacketHandler.packetLenKind[3]+=len;
         }
