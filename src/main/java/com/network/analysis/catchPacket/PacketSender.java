@@ -39,22 +39,22 @@ public class PacketSender extends Thread {
         try {
             switch (attack.getType()) {
                 case 1:
-                    sendARPRequest(attack.getRound(), attack.getSleep(), attack.getSpeed(), attack.getSrcIp(), attack.getSrcMac(), attack.getDesIp());
+                    sendARPRequest();
                     break;
                 case 2:
-                    sendARPReply(attack.getRound(), attack.getSleep(), attack.getSpeed(), attack.getSrcIp(), attack.getSrcMac(), attack.getDesIp(), attack.getDesMac());
+                    sendARPReply();
                     break;
                 case 3:
-                    sendPINGRequest(10, 0, 1, "125.216.246.33", "a0-8c-fd-4f-c0-45", "125.216.246.30", "98-e7-f4-4b-f1-e3");
+                    sendPINGRequest();
                     break;
                 case 4:
-                    sendPINGReply(10, 0, 1, "125.216.246.33", "a0-8c-fd-4f-c0-45", "125.216.246.30", "98-e7-f4-4b-f1-e3");
+                    sendPINGReply();
                     break;
                 case 5:
-                    sendTCP(10, 0, 30, "125.216.246.33", "a0-8c-fd-4f-c0-45", "125.216.246.30", "98-e7-f4-4b-f1-e3",10000,10000);
+                    sendTCP();
                     break;
                 case 6:
-                    sendUDP(10, 0, 1, "125.216.246.33", "a0-8c-fd-4f-c0-45", "125.216.246.30", "98-e7-f4-4b-f1-e3",888,80);
+                    sendUDP();
                     break;
             }
 
@@ -64,15 +64,13 @@ public class PacketSender extends Thread {
     }
 
     //ARP应答
-    private void sendARPReply(int round, int sleep, int speed, String srcIp, String srcMac, String desIp, String desMac) throws UnknownHostException {
+    private void sendARPReply() throws UnknownHostException {
 
-        InetAddress srcip = InetAddress.getByName(srcIp);
-        byte[] srcmac = stomac(srcMac);
+        InetAddress srcip = InetAddress.getByName(attack.getSrcIp());
+        byte[] srcmac = stomac(attack.getSrcMac());
 
-        //"a0-8c-fd-4f-c0-45"
-
-        InetAddress desip = InetAddress.getByName(desIp);
-        byte[] desmac = stomac(desMac);
+        InetAddress desip = InetAddress.getByName(attack.getDesIp());
+        byte[] desmac = stomac(attack.getDesMac());
         // 设置ARP包
         ARPPacket arp = new ARPPacket();
         arp.hardtype = ARPPacket.HARDTYPE_ETHER;
@@ -94,14 +92,15 @@ public class PacketSender extends Thread {
         ether.dst_mac = desmac;
         arp.datalink = ether;
         System.out.println("Send Arp To IPAddr: " + arp.getSenderProtocolAddress());
+        int round=attack.getRound();
         while (round >= 0) {
-            for (int i = 0; i < speed; i++) {
+            for (int i = 0; i < attack.getSpeed(); i++) {
                 sender.sendPacket(arp);
             }
             round--;
             try {
-                if (sleep > 0)
-                    sleep(sleep);
+                if (attack.getSleep() > 0)
+                    sleep(attack.getSleep());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -109,13 +108,13 @@ public class PacketSender extends Thread {
     }
 
     //ARP请求
-    private void sendARPRequest(int round, int sleep, int speed, String srcIp, String srcMac, String desIp) throws UnknownHostException {
+    private void sendARPRequest() throws UnknownHostException {
         byte[] broadcast = stomac("ff-ff-ff-ff-ff-ff");
-        InetAddress srcip = InetAddress.getByName(srcIp);
-        byte[] srcmac = stomac(srcMac);
+        InetAddress srcip = InetAddress.getByName(attack.getSrcIp());
+        byte[] srcmac = stomac(attack.getSrcMac());
 
         // 设置需要向其发送ARP请求的主机IP
-        InetAddress desip = InetAddress.getByName(desIp);
+        InetAddress desip = InetAddress.getByName(attack.getDesIp());
         ARPPacket arpPacket = new ARPPacket();
         arpPacket.hardtype = ARPPacket.HARDTYPE_ETHER;
         arpPacket.prototype = ARPPacket.PROTOTYPE_IP;
@@ -135,15 +134,16 @@ public class PacketSender extends Thread {
         ether.dst_mac = broadcast;
         arpPacket.datalink = ether;
 
+        int round=attack.getRound();
         while (round >= 0) {
-            for (int i = 0; i < speed; i++) {
+            for (int i = 0; i < attack.getSpeed(); i++) {
                 sender.sendPacket(arpPacket);
                 System.out.println("Send Arp To IPAddr: " + "broadcast");
             }
             round--;
             try {
-                if (sleep > 0)
-                    sleep(sleep);
+                if (attack.getSleep() > 0)
+                    sleep(attack.getSleep());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -152,12 +152,12 @@ public class PacketSender extends Thread {
 
 
     //PING请求
-    private void sendPINGRequest(int round, int sleep, int speed, String srcIp, String srcMac, String desIp, String desMac) throws UnknownHostException {
-        InetAddress srcip = InetAddress.getByName(srcIp);
-        byte[] srcmac = stomac(srcMac);
+    private void sendPINGRequest() throws UnknownHostException {
+        InetAddress srcip = InetAddress.getByName(attack.getSrcIp());
+        byte[] srcmac = stomac(attack.getSrcMac());
 
-        InetAddress desip = InetAddress.getByName(desIp);
-        byte[] desmac = stomac(desMac);
+        InetAddress desip = InetAddress.getByName(attack.getDesIp());
+        byte[] desmac = stomac(attack.getDesMac());
 
 
         ICMPPacket icmpPacket = new ICMPPacket();
@@ -182,16 +182,17 @@ public class PacketSender extends Thread {
 
         System.out.println("Send PING request to " + icmpPacket.dst_ip);
 
+        int round=attack.getRound();
         while (round >= 0) {
-            for (int i = 0; i < speed; i++) {
+            for (int i = 0; i < attack.getSpeed(); i++) {
                 icmpPacket.sec = System.currentTimeMillis() / 1000;
                 icmpPacket.ident++;
                 sender.sendPacket(icmpPacket);
             }
             round--;
             try {
-                if (sleep > 0)
-                    sleep(sleep);
+                if (attack.getSleep() > 0)
+                    sleep(attack.getSleep());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -199,12 +200,12 @@ public class PacketSender extends Thread {
     }
 
     //PING应答
-    private void sendPINGReply(int round, int sleep, int speed, String srcIp, String srcMac, String desIp, String desMac) throws UnknownHostException {
-        InetAddress srcip = InetAddress.getByName(srcIp);
-        byte[] srcmac = stomac(srcMac);
+    private void sendPINGReply() throws UnknownHostException {
+        InetAddress srcip = InetAddress.getByName(attack.getSrcIp());
+        byte[] srcmac = stomac(attack.getSrcMac());
 
-        InetAddress desip = InetAddress.getByName(desIp);
-        byte[] desmac = stomac(desMac);
+        InetAddress desip = InetAddress.getByName(attack.getDesIp());
+        byte[] desmac = stomac(attack.getDesMac());
 
 
         ICMPPacket icmpPacket = new ICMPPacket();
@@ -229,16 +230,17 @@ public class PacketSender extends Thread {
 
         System.out.println("Send PING reply to " + icmpPacket.dst_ip);
 
+        int round=attack.getRound();
         while (round >= 0) {
-            for (int i = 0; i < speed; i++) {
+            for (int i = 0; i < attack.getSpeed(); i++) {
                 icmpPacket.sec = System.currentTimeMillis() / 1000;
                 icmpPacket.ident++;
                 sender.sendPacket(icmpPacket);
             }
             round--;
             try {
-                if (sleep > 0)
-                    sleep(sleep);
+                if (attack.getSleep() > 0)
+                    sleep(attack.getSleep());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -246,13 +248,13 @@ public class PacketSender extends Thread {
     }
 
     //UDP
-    private void sendUDP(int round, int sleep, int speed, String srcIp, String srcMac, String desIp, String desMac,int srcPort,int desPort) throws UnknownHostException {
-        InetAddress srcip = InetAddress.getByName(srcIp);
-        byte[] srcmac = stomac(srcMac);
-        InetAddress desip = InetAddress.getByName(desIp);
-        byte[] desmac = stomac(desMac);
+    private void sendUDP() throws UnknownHostException {
+        InetAddress srcip = InetAddress.getByName(attack.getSrcIp());
+        byte[] srcmac = stomac(attack.getSrcMac());
+        InetAddress desip = InetAddress.getByName(attack.getDesIp());
+        byte[] desmac = stomac(attack.getDesMac());
 
-        UDPPacket udpPacket = new UDPPacket(srcPort, desPort);
+        UDPPacket udpPacket = new UDPPacket(attack.getSrcPort(), attack.getDesPort());
         udpPacket.usec = 123456;
         udpPacket.data = "Hello world!".getBytes();
 
@@ -268,15 +270,16 @@ public class PacketSender extends Thread {
 
         System.out.println("Send UDP to " + udpPacket.dst_ip);
 
+        int round=attack.getRound();
         while (round >= 0) {
-            for (int i = 0; i < speed; i++) {
+            for (int i = 0; i < attack.getSpeed(); i++) {
                 udpPacket.sec = System.currentTimeMillis() / 1000;
                 sender.sendPacket(udpPacket);
             }
             round--;
             try {
-                if (sleep > 0)
-                    sleep(sleep);
+                if (attack.getSleep() > 0)
+                    sleep(attack.getSleep());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -284,14 +287,14 @@ public class PacketSender extends Thread {
     }
 
     //TCP
-    private void sendTCP(int round, int sleep, int speed, String srcIp, String srcMac, String desIp, String desMac,int srcPort,int desPort) throws UnknownHostException {
-        InetAddress srcip = InetAddress.getByName(srcIp);
-        byte[] srcmac = stomac(srcMac);
-        InetAddress desip = InetAddress.getByName(desIp);
-        byte[] desmac = stomac(desMac);
+    private void sendTCP() throws UnknownHostException {
+        InetAddress srcip = InetAddress.getByName(attack.getSrcIp());
+        byte[] srcmac = stomac(attack.getSrcMac());
+        InetAddress desip = InetAddress.getByName(attack.getDesIp());
+        byte[] desmac = stomac(attack.getDesMac());
 
 
-        TCPPacket tcpPacket = new TCPPacket(srcPort, desPort, 123, 0, false, false, false, false,
+        TCPPacket tcpPacket = new TCPPacket(attack.getSrcPort(), attack.getDesPort(), 123, 0, false, false, false, false,
                 true, false, false, false, 2, 0);
         tcpPacket.data = "Hello world!".getBytes();
         tcpPacket.setIPv4Parameter(0, false, false, false, 0, false,
@@ -303,14 +306,15 @@ public class PacketSender extends Thread {
         ether.dst_mac = desmac;
         tcpPacket.datalink = ether;
 
+        int round=attack.getRound();
         while (round >= 0) {
-            for (int i = 0; i < speed; i++) {
+            for (int i = 0; i < attack.getSpeed(); i++) {
                 sender.sendPacket(tcpPacket);
             }
             round--;
             try {
-                if (sleep > 0)
-                    sleep(sleep);
+                if (attack.getSleep() > 0)
+                    sleep(attack.getSleep());
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
