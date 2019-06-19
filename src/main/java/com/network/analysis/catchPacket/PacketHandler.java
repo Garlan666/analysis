@@ -3,13 +3,11 @@ package com.network.analysis.catchPacket;
 import com.network.analysis.entity.PacketInfo;
 import com.network.analysis.entity.myPacket;
 import jpcap.JpcapCaptor;
-import jpcap.JpcapWriter;
 import jpcap.packet.Packet;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -26,6 +24,7 @@ public class PacketHandler {
     public static double packetLenTotal = 0;
     public static double[] packetLenKind = new double[]{0, 0, 0, 0, 0};
     public static List<myPacket> warnPacketList = new ArrayList<>();//可疑数据包列表
+    public static List<myPacket> warnMessageList=new ArrayList<>();//可疑消息列表
     public static PacketChecker packetChecker = new PacketChecker();//数据包检查线程
 
     private JpcapCaptor jp = null;
@@ -103,9 +102,9 @@ public class PacketHandler {
 
     //返回可疑数据包列表
     public List<myPacket> getWarnPacketList(int offset) {
-        if(offset>warnPacketList.size())
+        if(offset>warnMessageList.size())
             return null;
-        return warnPacketList.subList(offset,warnPacketList.size());
+        return warnMessageList.subList(offset,warnMessageList.size());
     }
 
 
@@ -119,7 +118,7 @@ public class PacketHandler {
 
     public static void catchWarn(myPacket mp){
         try {
-            fileWriter.append(df.format(new Date(mp.getPacket().sec*1000L))+" :"+mp.getPacket().toString()+"\r\n");
+            fileWriter.append(df.format(new Date(mp.getPacket().sec*1000L))+mp.getWarningMsg()+" :"+mp.getPacket().toString()+"\r\n");
             warnPacketList.add(mp);
         } catch (IOException e) {
             e.printStackTrace();

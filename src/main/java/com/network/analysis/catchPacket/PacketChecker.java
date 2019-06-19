@@ -2,10 +2,8 @@ package com.network.analysis.catchPacket;
 
 import com.network.analysis.entity.myPacket;
 import com.network.analysis.entity.timeQueue;
-import com.sun.jmx.snmp.tasks.ThreadService;
 import jpcap.packet.*;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -20,7 +18,7 @@ public class PacketChecker extends Thread {
 
     private Queue<Packet> packets = new ConcurrentLinkedDeque<>();
     private myPacket mp;
-    private ArrayList<InetAddress> inetAddress=new ArrayList<InetAddress>();//本机网络信息
+    private ArrayList<InetAddress> inetAddress = new ArrayList<InetAddress>();//本机网络信息
     private Map<String, String> ARPChart = new HashMap();//HashMap摸拟ARP表
     private timeQueue tcptimequeue;
     private timeQueue udpTimeQueue;
@@ -47,18 +45,18 @@ public class PacketChecker extends Thread {
         }
     }
 
-    private void init(){
+    private void init() {
         getInetAddress();
 
-        for(int i=0;i<inetAddress.size();i++){
-            ARPChart.put(inetAddress.get(i).getHostAddress(),getMACAddress(inetAddress.get(i)));
+        for (int i = 0; i < inetAddress.size(); i++) {
+            ARPChart.put(inetAddress.get(i).getHostAddress(), getMACAddress(inetAddress.get(i)));
         }
 
         runTask();
 
-        tcptimequeue=new timeQueue(6,2);
-        flevel=8000;   //syn报文正常参考数量
-        a=0.5;    //平滑参数
+        tcptimequeue = new timeQueue(6, 2);
+        flevel = 8000;   //syn报文正常参考数量
+        a = 0.5;    //平滑参数
 
 
         udpTimeQueue = new timeQueue(6, 2);
@@ -66,7 +64,7 @@ public class PacketChecker extends Thread {
     }
 
 
-    private void getInetAddress(){
+    private void getInetAddress() {
 
         try {
             for (Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
@@ -76,11 +74,11 @@ public class PacketChecker extends Thread {
                 }
                 Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
                 if (addresses.hasMoreElements()) {
-                    InetAddress t=addresses.nextElement();
-                    if(t.getHostAddress().startsWith("169.254.")){
+                    InetAddress t = addresses.nextElement();
+                    if (t.getHostAddress().startsWith("169.254.")) {
                         continue;
                     }
-                   inetAddress.add(t);
+                    inetAddress.add(t);
                 }
             }
         } catch (SocketException e) {
@@ -88,9 +86,9 @@ public class PacketChecker extends Thread {
         }
     }
 
-    private boolean ifContain(String ip){
-        for(int i=0;i<inetAddress.size();i++){
-            if(ip.equals("/"+inetAddress.get(i).getHostAddress())){
+    private boolean ifContain(String ip) {
+        for (int i = 0; i < inetAddress.size(); i++) {
+            if (ip.equals("/" + inetAddress.get(i).getHostAddress())) {
                 return true;
             }
         }
@@ -146,28 +144,29 @@ public class PacketChecker extends Thread {
 
     private class IpTime {
         Queue<Long> ipqueue = new LinkedList<>();
-        HashMap<Integer,Long>ipport=new HashMap<>();
-        long createtime=0;//hash连接创建时间
-        long refreshtime=0;//上次刷新时间
+        HashMap<Integer, Long> ipport = new HashMap<>();
+        long createtime = 0;//hash连接创建时间
+        long refreshtime = 0;//上次刷新时间
 //        int min=400;
     }
 
     HashMap<String, IpTime> tcpmap = new HashMap<>();
     HashMap<String, IpTime> udpMap = new HashMap<>();
+
     //每10分钟检查一次tcpmap，如果存在iptime 10分钟未刷新，删除键值对,清空ipqueue和ipport
     private void runTask() {
-        final long timeInterval = 10*60*60;
+        final long timeInterval = 10 * 60 * 60;
         Runnable runnable = new Runnable() {
             public void run() {
                 while (true) {
-                    for (Map.Entry<String,IpTime> entry : tcpmap.entrySet()) {
-                        if(entry.getValue().refreshtime-entry.getValue().createtime>=timeInterval) {
-                            entry.getValue().ipqueue=null;
+                    for (Map.Entry<String, IpTime> entry : tcpmap.entrySet()) {
+                        if (entry.getValue().refreshtime - entry.getValue().createtime >= timeInterval) {
+                            entry.getValue().ipqueue = null;
                             tcpmap.remove(entry.getKey());
                         }
                     }
-                    for (Map.Entry<String,IpTime> entry : udpMap.entrySet()) {
-                        if(entry.getValue().refreshtime-entry.getValue().createtime>=timeInterval)
+                    for (Map.Entry<String, IpTime> entry : udpMap.entrySet()) {
+                        if (entry.getValue().refreshtime - entry.getValue().createtime >= timeInterval)
                             udpMap.remove(entry.getKey());
                     }
                     try {
@@ -183,7 +182,7 @@ public class PacketChecker extends Thread {
 int max=0;
 
     public void TCPChecker(TCPPacket tcpPacket) {
-        if (ifContain(tcpPacket.dst_ip.toString())&&!tcpPacket.src_ip.toString().equals("/202.38.193.65")) {
+        if (ifContain(tcpPacket.dst_ip.toString()) && !tcpPacket.src_ip.toString().equals("/202.38.193.65")) {
             if (tcpPacket.syn) {
                 if (tcpPacket.src_ip == tcpPacket.dst_ip) {
                     mp.setProtocol(1);
@@ -199,10 +198,10 @@ int max=0;
                 }
                 IpTime iptime = new IpTime();
                 if (tcpmap.containsKey(tcpPacket.src_ip.toString())) {
-                    iptime.refreshtime=tcpPacket.sec;
+                    iptime.refreshtime = tcpPacket.sec;
                     iptime = tcpmap.get(tcpPacket.src_ip.toString());
                     iptime.ipqueue.offer(tcpPacket.sec);
-                    iptime.ipport.put(new Integer(tcpPacket.dst_port),tcpPacket.sec);
+                    iptime.ipport.put(new Integer(tcpPacket.dst_port), tcpPacket.sec);
                     if (iptime.ipqueue.size() > 250) {
                         iptime.ipqueue.poll();
 //                        if(tcpPacket.sec-iptime.ipqueue.peek()<iptime.min)iptime.min=(int)(tcpPacket.sec-iptime.ipqueue.peek());
@@ -215,17 +214,16 @@ int max=0;
                         }
                     }
                     tcpmap.put(tcpPacket.src_ip.toString(), iptime);
-                }
-                else {
-                    iptime.ipport.put(new Integer(tcpPacket.dst_port),tcpPacket.sec);
-                    iptime.createtime=tcpPacket.sec;
+                } else {
+                    iptime.ipport.put(new Integer(tcpPacket.dst_port), tcpPacket.sec);
+                    iptime.createtime = tcpPacket.sec;
                     iptime.ipqueue = new LinkedList<>();
                     iptime.ipqueue.offer(tcpPacket.sec);
                     tcpmap.put(tcpPacket.src_ip.toString(), iptime);
                 }
                 //ipport存入5分钟内试图连接的端口
-                for (Map.Entry<Integer,Long> entry : iptime.ipport.entrySet()) {
-                    if(tcpPacket.sec-entry.getValue()>=5*60*60)iptime.ipport.remove(entry.getKey());
+                for (Map.Entry<Integer, Long> entry : iptime.ipport.entrySet()) {
+                    if (tcpPacket.sec - entry.getValue() >= 5 * 60 * 60) iptime.ipport.remove(entry.getKey());
                 }
                 if(iptime.ipport.size()>max)max=iptime.ipport.size();
                 if(iptime.ipport.size()>=100){
@@ -234,7 +232,7 @@ int max=0;
                     PacketHandler.catchWarn(mp);
                 }
             }
-            if ((tcpPacket.fin&&tcpPacket.urg&&tcpPacket.psh)||(tcpPacket.fin && tcpPacket.syn) || (!tcpPacket.syn && !tcpPacket.fin && !tcpPacket.ack && !tcpPacket.psh && !tcpPacket.rst && !tcpPacket.urg)) {
+            if ((tcpPacket.fin && tcpPacket.urg && tcpPacket.psh) || (tcpPacket.fin && tcpPacket.syn) || (!tcpPacket.syn && !tcpPacket.fin && !tcpPacket.ack && !tcpPacket.psh && !tcpPacket.rst && !tcpPacket.urg)) {
                 mp.setProtocol(1);
                 mp.setWarningMsg("此报文非法，疑似扫描");
                 PacketHandler.catchWarn(mp);
@@ -261,7 +259,7 @@ int max=0;
             }
             IpTime udpiptime = new IpTime();
             if (udpMap.containsKey(udpPacket.src_ip.toString())) {
-                udpiptime.refreshtime=udpPacket.sec;
+                udpiptime.refreshtime = udpPacket.sec;
                 udpiptime = udpMap.get(udpPacket.src_ip.toString());
                 udpiptime.ipqueue.offer(udpPacket.sec);
                 udpiptime.ipport.put(new Integer(udpPacket.dst_port),udpPacket.sec);
