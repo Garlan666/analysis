@@ -270,7 +270,7 @@ int max=0;
     }
 
     private void UDPChecker(UDPPacket udpPacket) {
-        if (ifContain(udpPacket.dst_ip.toString())) {
+        if (ifContain(udpPacket.dst_ip.toString())&&!udpPacket.src_ip.toString().equals("/202.38.193.65")){
             if (udpPacket.src_ip == udpPacket.dst_ip) {
                 mp.setProtocol(2);
                 mp.setWarningMsg("此报文源IP与目的IP相同，疑似Land攻击");
@@ -288,7 +288,7 @@ int max=0;
                 udpiptime.refreshtime = udpPacket.sec;
                 udpiptime = udpMap.get(udpPacket.src_ip.toString());
                 udpiptime.ipqueue.offer(udpPacket.sec);
-                //iptime.ipport.put(new Integer(tcpPacket.dst_port),tcpPacket.sec);
+                udpiptime.ipport.put(new Integer(udpPacket.dst_port),udpPacket.sec);
                 if (udpiptime.ipqueue.size() > 250) {
                     udpiptime.ipqueue.poll();
 //                        if(tcpPacket.sec-iptime.ipqueue.peek()<iptime.min)iptime.min=(int)(tcpPacket.sec-iptime.ipqueue.peek());
@@ -301,12 +301,23 @@ int max=0;
                     }
                 }
                 udpMap.put(udpPacket.src_ip.toString(), udpiptime);
-            } else {
-                //udpiptime.ipport.put(new Integer(tcpPacket.dst_port),tcpPacket.sec);
-                udpiptime.createtime = udpPacket.sec;
+            }
+            else {
+                udpiptime.ipport.put(new Integer(udpPacket.dst_port),udpPacket.sec);
+                udpiptime.createtime=udpPacket.sec;
                 udpiptime.ipqueue = new LinkedList<>();
                 udpiptime.ipqueue.offer(udpPacket.sec);
                 udpMap.put(udpPacket.src_ip.toString(), udpiptime);
+            }
+            //ipport存入5分钟内试图连接的端口
+            for (Map.Entry<Integer,Long> entry : udpiptime.ipport.entrySet()) {
+                if(udpPacket.sec-entry.getValue()>=5*60*60)udpiptime.ipport.remove(entry.getKey());
+            }
+            if(udpiptime.ipport.size()>max)max=udpiptime.ipport.size();
+            if(udpiptime.ipport.size()>=100){
+                mp.setProtocol(2);
+                mp.setWarningMsg("此IP在短时间内大量访问不同端口，疑似端口扫描");
+                PacketHandler.catchWarn(mp);
             }
         }
     }
@@ -316,6 +327,11 @@ int max=0;
         if (icmpPacket.len > 65535) {
             mp.setProtocol(3);
             mp.setWarningMsg("收到一个异常的ICMP报文，有可能遭遇“死亡之ping”攻击");
+            PacketHandler.catchWarn(mp);
+        }
+        if(icmpPacket.type == 8 && ifContain(icmpPacket.dst_ip.toString())){
+            mp.setProtocol(3);
+            mp.setWarningMsg("收到一个ICMP_ECHO报文，某机器在试图ping通该设备");
             PacketHandler.catchWarn(mp);
         }
     }
