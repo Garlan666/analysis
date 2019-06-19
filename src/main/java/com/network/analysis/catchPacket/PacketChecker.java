@@ -148,23 +148,24 @@ public class PacketChecker extends Thread {
     }
 
     private class IpTime {
-        Queue<Long> synqueue = new LinkedList<>();
+        Queue<Long> ipqueue = new LinkedList<>();
         HashMap<Integer,Long>ipport=new HashMap<>();
         long createtime=0;//hash连接创建时间
         long refreshtime=0;//上次刷新时间
 //        int min=400;
     }
 
-    HashMap<String, IpTime> map = new HashMap<>();
-    //每10分钟检查一次map，如果存在iptime 10分钟未刷新，删除键值对,清空synqueue和ipport
+    HashMap<String, IpTime> tcpmap = new HashMap<>();
+    HashMap<String, IpTime> udpMap = new HashMap<>();
+    //每10分钟检查一次tcpmap，如果存在iptime 10分钟未刷新，删除键值对,清空ipqueue和ipport
     private void runTask() {
         final long timeInterval = 10*60*60;
         Runnable runnable = new Runnable() {
             public void run() {
                 while (true) {
-                    for (Map.Entry<String,IpTime> entry : map.entrySet()) {
+                    for (Map.Entry<String,IpTime> entry : tcpmap.entrySet()) {
                         if(entry.getValue().refreshtime-entry.getValue().createtime>=timeInterval)
-                            map.remove(entry.getKey());
+                            tcpmap.remove(entry.getKey());
                     }
                     try {
                         Thread.sleep(timeInterval);
@@ -194,30 +195,30 @@ public class PacketChecker extends Thread {
                     PacketHandler.catchWarn(mp);
                 }
                 IpTime iptime = new IpTime();
-                if (map.containsKey(tcpPacket.src_ip.toString())) {
+                if (tcpmap.containsKey(tcpPacket.src_ip.toString())) {
                     iptime.refreshtime=tcpPacket.sec;
-                    iptime = map.get(tcpPacket.src_ip.toString());
-                    iptime.synqueue.offer(tcpPacket.sec);
+                    iptime = tcpmap.get(tcpPacket.src_ip.toString());
+                    iptime.ipqueue.offer(tcpPacket.sec);
                     iptime.ipport.put(new Integer(tcpPacket.dst_port),tcpPacket.sec);
-                    if (iptime.synqueue.size() > 250) {
-                        iptime.synqueue.poll();
-//                        if(tcpPacket.sec-iptime.synqueue.peek()<iptime.min)iptime.min=(int)(tcpPacket.sec-iptime.synqueue.peek());
+                    if (iptime.ipqueue.size() > 250) {
+                        iptime.ipqueue.poll();
+//                        if(tcpPacket.sec-iptime.ipqueue.peek()<iptime.min)iptime.min=(int)(tcpPacket.sec-iptime.ipqueue.peek());
 //                        System.out.println(tcpPacket.src_ip+" "+iptime.min);
-                        if (tcpPacket.sec - iptime.synqueue.peek() < 10) {
+                        if (tcpPacket.sec - iptime.ipqueue.peek() < 10) {
                             //syn洪流报警
                             mp.setProtocol(1);
                             mp.setWarningMsg("此IP的SYN请求过多，疑似SYN洪流攻击");
                             PacketHandler.catchWarn(mp);
                         }
                     }
-                    map.put(tcpPacket.src_ip.toString(), iptime);
+                    tcpmap.put(tcpPacket.src_ip.toString(), iptime);
                 }
                 else {
                     iptime.ipport.put(new Integer(tcpPacket.dst_port),tcpPacket.sec);
                     iptime.createtime=tcpPacket.sec;
-                    iptime.synqueue = new LinkedList<>();
-                    iptime.synqueue.offer(tcpPacket.sec);
-                    map.put(tcpPacket.src_ip.toString(), iptime);
+                    iptime.ipqueue = new LinkedList<>();
+                    iptime.ipqueue.offer(tcpPacket.sec);
+                    tcpmap.put(tcpPacket.src_ip.toString(), iptime);
                 }
                 //ipport存入5分钟内试图连接的端口
                 for (Map.Entry<Integer,Long> entry : iptime.ipport.entrySet()) {
@@ -237,6 +238,9 @@ public class PacketChecker extends Thread {
     }
 
     private void UDPChecker(UDPPacket udpPacket) {
+        if (ifContain(udpPacket.dst_ip.toString())){
+            
+        }
 //        udpTimeQueue.add(udpPacket.sec);
 //        int f2=udpTimeQueue.average();
 //        if((a*udpTimeQueue.last()+(1-a)*flevel)/f2>=2){
