@@ -303,6 +303,11 @@ int max=0;
             mp.setWarningMsg("收到一个异常的ICMP报文，有可能遭遇“死亡之ping”攻击");
             PacketHandler.catchWarn(mp);
         }
+        if(icmpPacket.type == 8 && ifContain(icmpPacket.dst_ip.toString())){
+            mp.setProtocol(3);
+            mp.setWarningMsg("收到一个ICMP_ECHO报文，某机器在试图ping通该设备");
+            PacketHandler.catchWarn(mp);
+        }
     }
 
     private void ARPChecker(ARPPacket arpPacket) {
