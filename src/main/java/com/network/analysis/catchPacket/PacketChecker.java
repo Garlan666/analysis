@@ -28,8 +28,8 @@ public class PacketChecker extends Thread {
     private Map<String, String> ARPChart = new HashMap();//HashMap摸拟ARP表
     private timeQueue tcptimequeue;
     private timeQueue udpTimeQueue;
-    private int flevel=50;   //syn报文正常参考数量
-    private double a=0.5;    //平滑参数
+    private int flevel;   //syn报文正常参考数量
+    private double a;    //平滑参数
 
 
     @Override
@@ -53,6 +53,12 @@ public class PacketChecker extends Thread {
 
     private void init(){
         tcptimequeue=new timeQueue(6,2);
+        flevel=8000;   //syn报文正常参考数量
+        a=0.5;    //平滑参数
+
+
+        udpTimeQueue=new timeQueue(6,2);
+
     }
 
 
@@ -107,7 +113,7 @@ public class PacketChecker extends Thread {
         packets.offer(packet);
     }
 
-    private static class IpTime {
+    private class IpTime {
         Queue<Long> synqueue = new LinkedList<>();
     }
 
@@ -129,7 +135,7 @@ public class PacketChecker extends Thread {
             }
             tcptimequeue.add(tcpPacket.sec);
             int f=tcptimequeue.average();
-            if((a*tcptimequeue.last()+(1-a)*flevel)/f>=2) {
+            if(tcptimequeue.last()/(a*f+(1-a)*flevel)>=2) {
                 mp.setProtocol(1);
                 mp.setWarningMsg("当前时段SYN请求过多，疑似DDos攻击");
                 PacketHandler.catchWarn(mp);
@@ -157,13 +163,13 @@ public class PacketChecker extends Thread {
     }
 
     private void UDPChecker(UDPPacket udpPacket) {
-        udpTimeQueue.add(udpPacket.sec);
-        int f2=udpTimeQueue.average();
-        if((a*udpTimeQueue.last()+(1-a)*flevel)/f2>=2){
-        mp.setProtocol(2);
-        mp.setWarningMsg("当前时段收到的UDP类型的数据包过多，疑似遭遇UDP洪流攻击");
-        PacketHandler.catchWarn(mp);
-        }
+//        udpTimeQueue.add(udpPacket.sec);
+//        int f2=udpTimeQueue.average();
+//        if((a*udpTimeQueue.last()+(1-a)*flevel)/f2>=2){
+//        mp.setProtocol(2);
+//        mp.setWarningMsg("当前时段收到的UDP类型的数据包过多，疑似遭遇UDP洪流攻击");
+//        PacketHandler.catchWarn(mp);
+//        }
     }
 
 

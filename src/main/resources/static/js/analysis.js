@@ -225,10 +225,10 @@ function showWarning() {
 
         switch (warningList[i].protocol) {
             case 1:
-                ;
+                showTCP(warningList[i],ptime);
                 break;
             case 2:
-                ;
+                showUDP(warningList[i],ptime);
                 break;
             case 3:
                 showICMP(warningList[i], ptime);
@@ -248,12 +248,38 @@ function showTCP(wp, ptime) {
 
     var pro = 'TCP';
     var htmlstr = '';
+    $('#warn-list').append(`<div class="one-warn">
+            <div>
+                类型：<span>${pro}</span>
+            </div>
+            <div>
+                时间：<span>${ptime}</span>
+            </div>
+            <div>
+                 源地址：<span>${wp.packet.src_ip}</span>  &nbsp;&nbsp;目的地址：<span>${wp.packet.dst_ip}</span>
+            </div>
+            ${htmlstr}
+            <div>警告信息：<span>${wp.warningMsg}</span></div>
+        </div>`);
 }
 
 function showUDP(wp, ptime) {
 
     var pro = 'UDP';
     var htmlstr = '';
+    $('#warn-list').append(`<div class="one-warn">
+            <div>
+                类型：<span>${pro}</span>
+            </div>
+            <div>
+                时间：<span>${ptime}</span>
+            </div>
+            <div>
+                 源地址：<span>${wp.packet.src_ip}</span>  &nbsp;&nbsp;目的地址：<span>${wp.packet.dst_ip}</span>
+            </div>
+            ${htmlstr}
+            <div>警告信息：<span>${wp.warningMsg}</span></div>
+        </div>`);
 }
 
 function showICMP(wp, ptime) {
