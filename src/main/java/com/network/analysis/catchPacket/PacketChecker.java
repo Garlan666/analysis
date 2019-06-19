@@ -2,6 +2,7 @@ package com.network.analysis.catchPacket;
 
 import com.network.analysis.entity.myPacket;
 import com.network.analysis.entity.timeQueue;
+import com.sun.jmx.snmp.tasks.ThreadService;
 import jpcap.JpcapCaptor;
 import jpcap.JpcapSender;
 import jpcap.packet.*;
@@ -51,13 +52,13 @@ public class PacketChecker extends Thread {
         }
     }
 
-    private void init(){
-        tcptimequeue=new timeQueue(6,2);
-        flevel=8000;   //syn报文正常参考数量
-        a=0.5;    //平滑参数
+    private void init() {
+        tcptimequeue = new timeQueue(6, 2);
+        flevel = 8000;   //syn报文正常参考数量
+        a = 0.5;    //平滑参数
 
 
-        udpTimeQueue=new timeQueue(6,2);
+        udpTimeQueue = new timeQueue(6, 2);
 
     }
 
@@ -115,48 +116,89 @@ public class PacketChecker extends Thread {
 
     private class IpTime {
         Queue<Long> synqueue = new LinkedList<>();
+        HashMap<Integer,Long>ipport=new HashMap<>();
+        long createtime=0;//hash连接创建时间
+        long refreshtime=0;//上次刷新时间
+//        int min=400;
     }
 
     HashMap<String, IpTime> map = new HashMap<>();
+    //每10分钟检查一次map，如果存在iptime 10分钟未刷新，删除键值对,清空synqueue和ipport
+    public void runTask() {
+        final long timeInterval = 10*60*60;
+        Runnable runnable = new Runnable() {
+            public void run() {
+                while (true) {
+                    for (Map.Entry<String,IpTime> entry : map.entrySet()) {
+                        if(entry.getValue().refreshtime-entry.getValue().createtime>=timeInterval)
+                            map.remove(entry.getKey());
+                    }
+                    try {
+                        Thread.sleep(timeInterval);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+        Thread thread = new Thread(runnable);
+        thread.start();
+    }
 
 
     public void TCPChecker(TCPPacket tcpPacket) {
-
-        if (tcpPacket.syn) {
-            if(tcpPacket.src_ip==tcpPacket.dst_ip){
-                mp.setProtocol(1);
-                mp.setWarningMsg("此报文源IP与目的IP相同，疑似Land攻击");
-                PacketHandler.catchWarn(mp);
+        if (tcpPacket.dst_ip.toString().equals("/" + inetAddress.getHostAddress())) {
+            if (tcpPacket.syn) {
+                if (tcpPacket.src_ip == tcpPacket.dst_ip) {
+                    mp.setProtocol(1);
+                    mp.setWarningMsg("此报文源IP与目的IP相同，疑似Land攻击");
+                    PacketHandler.catchWarn(mp);
+                }
+                tcptimequeue.add(tcpPacket.sec);
+                int f = tcptimequeue.average();
+                if (tcptimequeue.last() / (a * f + (1 - a) * flevel) >= 2) {
+                    mp.setProtocol(1);
+                    mp.setWarningMsg("当前时段SYN请求过多，疑似DDos攻击");
+                    PacketHandler.catchWarn(mp);
+                }
+                IpTime iptime = new IpTime();
+                if (map.containsKey(tcpPacket.src_ip.toString())) {
+                    iptime.refreshtime=tcpPacket.sec;
+                    iptime = map.get(tcpPacket.src_ip.toString());
+                    iptime.synqueue.offer(tcpPacket.sec);
+                    iptime.ipport.put(new Integer(tcpPacket.dst_port),tcpPacket.sec);
+                    if (iptime.synqueue.size() > 250) {
+                        iptime.synqueue.poll();
+//                        if(tcpPacket.sec-iptime.synqueue.peek()<iptime.min)iptime.min=(int)(tcpPacket.sec-iptime.synqueue.peek());
+//                        System.out.println(tcpPacket.src_ip+" "+iptime.min);
+                        if (tcpPacket.sec - iptime.synqueue.peek() < 10) {
+                            //syn洪流报警
+                            mp.setProtocol(1);
+                            mp.setWarningMsg("此IP的SYN请求过多，疑似SYN洪流攻击");
+                            PacketHandler.catchWarn(mp);
+                        }
+                    }
+                    map.put(tcpPacket.src_ip.toString(), iptime);
+                }
+                else {
+                    iptime.ipport.put(new Integer(tcpPacket.dst_port),tcpPacket.sec);
+                    iptime.createtime=tcpPacket.sec;
+                    iptime.synqueue = new LinkedList<>();
+                    iptime.synqueue.offer(tcpPacket.sec);
+                    map.put(tcpPacket.src_ip.toString(), iptime);
+                }
+                //ipport存入5分钟内试图连接的端口
+                for (Map.Entry<Integer,Long> entry : iptime.ipport.entrySet()) {
+                    if(tcpPacket.sec-entry.getValue()>=5*60*60)iptime.ipport.remove(entry.getKey());
+                }
+                System.out.println(tcpPacket.src_ip+" "+tcpPacket.dst_port);
             }
-            if(tcpPacket.fin){
+            if ((tcpPacket.fin&&tcpPacket.urg&&tcpPacket.psh)||(tcpPacket.fin && tcpPacket.syn) || (!tcpPacket.syn && !tcpPacket.fin && !tcpPacket.ack && !tcpPacket.psh && !tcpPacket.rst && !tcpPacket.urg)) {
                 mp.setProtocol(1);
                 mp.setWarningMsg("此报文非法，疑似扫描");
                 PacketHandler.catchWarn(mp);
             }
-            tcptimequeue.add(tcpPacket.sec);
-            int f=tcptimequeue.average();
-            if(tcptimequeue.last()/(a*f+(1-a)*flevel)>=2) {
-                mp.setProtocol(1);
-                mp.setWarningMsg("当前时段SYN请求过多，疑似DDos攻击");
-                PacketHandler.catchWarn(mp);
-            }
-            if (map.containsKey(tcpPacket.src_ip.toString())) {
-                IpTime iptime = map.get(tcpPacket.src_ip.toString());
-                iptime.synqueue.offer(tcpPacket.sec);
-                if (iptime.synqueue.size() >= 60) iptime.synqueue.poll();
-                if (tcpPacket.sec - iptime.synqueue.peek() < 3) {
-                    //syn洪流报警
-                    mp.setProtocol(1);
-                    mp.setWarningMsg("此IP的SYN请求过多，疑似SYN洪流攻击");
-                    PacketHandler.catchWarn(mp);
-                }
-                map.put(tcpPacket.src_ip.toString(), iptime);
-            } else {
-                IpTime iptime = new IpTime();
-                iptime.synqueue = new LinkedList<>();
-                iptime.synqueue.offer(tcpPacket.sec);
-                map.put(tcpPacket.src_ip.toString(), iptime);
-            }
+
         }
 //        mp.setProtocol(1);
 //        PacketHandler.catchWarn(mp);
@@ -174,7 +216,7 @@ public class PacketChecker extends Thread {
 
 
     private void ICMPChecker(ICMPPacket icmpPacket) {
-        if(icmpPacket.len>65535){
+        if (icmpPacket.len > 65535) {
             mp.setProtocol(3);
             mp.setWarningMsg("收到一个异常的ICMP报文，有可能遭遇“死亡之ping”攻击");
             PacketHandler.catchWarn(mp);
