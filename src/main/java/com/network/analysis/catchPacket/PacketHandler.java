@@ -126,10 +126,6 @@ public class PacketHandler {
         }
     }
 
-    //获取本机信息
-    public void setInetAddress(InetAddress inetAddress){
-        packetChecker.setInetAddress(inetAddress);
-    }
 
 
 }

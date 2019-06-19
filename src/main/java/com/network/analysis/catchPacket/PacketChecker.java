@@ -11,10 +11,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.locks.Lock;
 
@@ -25,7 +22,7 @@ public class PacketChecker extends Thread {
 
     private Queue<Packet> packets = new ConcurrentLinkedDeque<>();
     private myPacket mp;
-    private InetAddress inetAddress;//本机网络信息
+    private ArrayList<InetAddress> inetAddress=new ArrayList<InetAddress>();//本机网络信息
     private Map<String, String> ARPChart = new HashMap();//HashMap摸拟ARP表
     private timeQueue tcptimequeue;
     private timeQueue udpTimeQueue;
@@ -52,10 +49,19 @@ public class PacketChecker extends Thread {
         }
     }
 
-    private void init() {
-        tcptimequeue = new timeQueue(6, 2);
-        flevel = 8000;   //syn报文正常参考数量
-        a = 0.5;    //平滑参数
+    private void init(){
+        getInetAddress();
+
+        for(int i=0;i<inetAddress.size();i++){
+            System.out.println(inetAddress.get(i).getHostAddress());
+            ARPChart.put(inetAddress.get(i).getHostAddress(),getMACAddress(inetAddress.get(i)));
+        }
+
+        runTask();
+
+        tcptimequeue=new timeQueue(6,2);
+        flevel=8000;   //syn报文正常参考数量
+        a=0.5;    //平滑参数
 
 
         udpTimeQueue = new timeQueue(6, 2);
@@ -63,10 +69,37 @@ public class PacketChecker extends Thread {
     }
 
 
-    public void setInetAddress(InetAddress inetAddress) {
-        this.inetAddress = inetAddress;
-        ARPChart.put("/" + this.inetAddress.getHostAddress(), getMACAddress(this.inetAddress));
+    private void getInetAddress(){
+
+        try {
+            for (Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
+                NetworkInterface networkInterface = interfaces.nextElement();
+                if (networkInterface.isLoopback() || networkInterface.isVirtual() || !networkInterface.isUp()) {
+                    continue;
+                }
+                Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
+                if (addresses.hasMoreElements()) {
+                    InetAddress t=addresses.nextElement();
+                    if(t.getHostAddress().startsWith("169.254.")){
+                        continue;
+                    }
+                   inetAddress.add(t);
+                }
+            }
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
     }
+
+    private boolean ifContain(String ip){
+        for(int i=0;i<inetAddress.size();i++){
+            if(ip.equals("/"+inetAddress.get(i).getHostAddress())){
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     private static String getMACAddress(InetAddress ia) {
         // 获得网络接口对象（即网卡），并得到mac地址，mac地址存在于一个byte数组中。
@@ -124,7 +157,7 @@ public class PacketChecker extends Thread {
 
     HashMap<String, IpTime> map = new HashMap<>();
     //每10分钟检查一次map，如果存在iptime 10分钟未刷新，删除键值对,清空synqueue和ipport
-    public void runTask() {
+    private void runTask() {
         final long timeInterval = 10*60*60;
         Runnable runnable = new Runnable() {
             public void run() {
@@ -141,13 +174,12 @@ public class PacketChecker extends Thread {
                 }
             }
         };
-        Thread thread = new Thread(runnable);
-        thread.start();
+        new Thread(runnable).start();
     }
 
 
     public void TCPChecker(TCPPacket tcpPacket) {
-        if (tcpPacket.dst_ip.toString().equals("/" + inetAddress.getHostAddress())) {
+        if (ifContain(tcpPacket.dst_ip.toString())) {
             if (tcpPacket.syn) {
                 if (tcpPacket.src_ip == tcpPacket.dst_ip) {
                     mp.setProtocol(1);

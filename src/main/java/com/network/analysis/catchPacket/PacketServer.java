@@ -33,9 +33,7 @@ public class PacketServer {
                     address +=   t + ": " + nc.addresses[t].address.toString()+"</br>";
                 }
                 interfaceList.add(new netInterface(nc.name,nc.description,nc.datalink_name,nc.datalink_description,address,nc.loopback));
-
             }
-            packetHandler.setInetAddress(InetAddress.getLocalHost());
 
         } catch (Exception ef) {
             ef.printStackTrace();
