@@ -216,6 +216,16 @@ ul.tabs li a.active {
     display: inline-block;
 }
 
+.warn-top {
+    width: 1040px;
+    height: 40px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+}
+
 #warn{
 margin-top: 30px;
 }
@@ -244,7 +254,7 @@ margin-top: 30px;
     height: auto;
     position: relative;
     top:-700px;
-    left: 1163px;
+    float: right;
     background: rgb(255, 255, 255);
     margin: 0;
     padding: 20px;
@@ -388,9 +398,8 @@ margin-top: 30px;
     outline: none;
     background: #FFFFFF;
     color: #F89406;
-    left: 500px;
     cursor: pointer;
-    position: absolute;
+    margin-left: 100px;
 }
 #whitelist{
     border-radius: 40px;
@@ -400,9 +409,8 @@ margin-top: 30px;
     outline: none;
     background: #FFFFFF;
     color: #F89406;
-    right: 500px;
+    margin-right: 100px;
     cursor: pointer;
-    position: absolute;
 }
 #attack:hover,#whitelist:hover{
     color: #FFFFFF;

@@ -52,23 +52,27 @@
     <div class="charts" id="chart6"></div>
 </div>
 <div id="warn">
-    <span id="warn-title">警告列表</span>
-    <input type="button" id="attack" value="发送数据包" onclick="window.open('attack.html')">
-    <input type="button" id="whitelist" value="白名单">
+    <div class="warn-top">
+        <input id="attack" onclick="window.open('attack.html')" type="button" value="发送数据包">
+        <span id="warn-title">警告列表</span>
+        <input id="whitelist" type="button" value="白名单">
+    </div>
     <div id="warn-list">
     </div>
-    <div id="white-list">
-        <div id="show-list">
-        </div>
-        <div class="ip-top">
-            <input class="ip">.
-            <input class="ip">.
-            <input class="ip">.
-            <input class="ip">
-        </div>
-        <div class="add-top">
-            <input type="button" value="添加" id="add-ip">
-            <input type="button" value="删除" id="remove-ip">
+    <div style="width: 1040px;margin: 0 auto">
+        <div id="white-list">
+            <div id="show-list">
+            </div>
+            <div class="ip-top">
+                <input class="ip">.
+                <input class="ip">.
+                <input class="ip">.
+                <input class="ip">
+            </div>
+            <div class="add-top">
+                <input id="add-ip" type="button" value="添加">
+                <input id="remove-ip" type="button" value="删除">
+            </div>
         </div>
     </div>
 </div>
