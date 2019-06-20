@@ -20,10 +20,16 @@ public class PacketChecker extends Thread {
     private myPacket mp;
     private ArrayList<InetAddress> inetAddress = new ArrayList<InetAddress>();//本机网络信息
     private Map<String, String> ARPChart = new HashMap();//HashMap摸拟ARP表
-    private timeQueue tcptimequeue;
+    private final int ICMP_DDOS = 11;
     private timeQueue udpTimeQueue;
-    private int flevel;   //syn报文正常参考数量
-    private double a;    //平滑参数
+    private final int ICMP_FLOOD = 12;
+    private final int ARP_CHEAT = 13;
+    HashMap<String, IpTime> tcpMap = new HashMap<>();
+    HashMap<String, IpTime> icmpMap = new HashMap<>();
+    private timeQueue tcpTimeQueue;
+    private timeQueue icmpTimeQueue;
+    private int synlevel;   //syn报文正常参考数量
+
 
 
     private final int TCP_LAND = 1;
@@ -36,7 +42,9 @@ public class PacketChecker extends Thread {
     private final int UDP_SCAN = 8;
     private final int ICMP_DEATH = 9;
     private final int ICMP_PING = 10;
-    private final int ARP_CHEAT = 11;
+    private int udplevel;
+    private int icmplevel;
+    private double syna;    //平滑参数
 
     private ArrayList<String> whiteList = new ArrayList<>();
 
@@ -91,22 +99,7 @@ public class PacketChecker extends Thread {
         }
     }
 
-    private void init() {
-        getInetAddress();
-        for (int i = 0; i < inetAddress.size(); i++) {
-            ARPChart.put(inetAddress.get(i).getHostAddress(), getMACAddress(inetAddress.get(i)));
-        }
-
-        runTask();
-
-        tcptimequeue = new timeQueue(6, 2);
-        flevel = 8000;   //syn报文正常参考数量
-        a = 0.5;    //平滑参数
-
-
-        udpTimeQueue = new timeQueue(6, 2);
-
-    }
+    private double udpa;
 
 
     private void getInetAddress() {
@@ -194,24 +187,56 @@ public class PacketChecker extends Thread {
         long refreshtime = 0;//上次刷新时间
     }
 
-    HashMap<String, IpTime> tcpmap = new HashMap<>();
+    private double icmpa;
     HashMap<String, IpTime> udpMap = new HashMap<>();
 
-    //每10分钟检查一次tcpmap，如果存在iptime 10分钟未刷新，删除键值对,清空ipqueue和ipport
+    private void init() {
+        getInetAddress();
+        for (int i = 0; i < inetAddress.size(); i++) {
+            ARPChart.put(inetAddress.get(i).getHostAddress(), getMACAddress(inetAddress.get(i)));
+        }
+
+        runTask();
+
+        tcpTimeQueue = new timeQueue(6, 2);
+        synlevel = 8000;   //syn报文正常参考数量
+        syna = 0.5;    //平滑参数
+
+
+        udpTimeQueue = new timeQueue(6, 2);
+        //设置
+        udplevel = 5000;
+        udpa = 0.5;
+
+        icmpTimeQueue = new timeQueue(6, 2);
+        //设置
+        icmplevel = 500;
+        icmpa = 0.5;
+    }
+
+    //每10分钟检查一次tcpMap，如果存在iptime 10分钟未刷新，删除键值对,清空ipqueue和ipport
     private void runTask() {
         final long timeInterval = 10 * 60 * 60;
         Runnable runnable = new Runnable() {
             public void run() {
                 while (true) {
-                    for (Map.Entry<String, IpTime> entry : tcpmap.entrySet()) {
+                    for (Map.Entry<String, IpTime> entry : tcpMap.entrySet()) {
                         if (entry.getValue().refreshtime - entry.getValue().createtime >= timeInterval) {
                             entry.getValue().ipqueue = null;
-                            tcpmap.remove(entry.getKey());
+                            tcpMap.remove(entry.getKey());
                         }
                     }
                     for (Map.Entry<String, IpTime> entry : udpMap.entrySet()) {
-                        if (entry.getValue().refreshtime - entry.getValue().createtime >= timeInterval)
+                        if (entry.getValue().refreshtime - entry.getValue().createtime >= timeInterval) {
+                            entry.getValue().ipqueue = null;
                             udpMap.remove(entry.getKey());
+                        }
+                    }
+                    for (Map.Entry<String, IpTime> entry : icmpMap.entrySet()) {
+                        if (entry.getValue().refreshtime - entry.getValue().createtime >= timeInterval) {
+                            entry.getValue().ipqueue = null;
+                            icmpMap.remove(entry.getKey());
+                        }
                     }
                     try {
                         Thread.sleep(timeInterval);
@@ -234,9 +259,9 @@ public class PacketChecker extends Thread {
                     mp.setWarningMsg("此报文源IP与目的IP相同，疑似Land攻击");
                     PacketHandler.catchWarn(mp);
                 }
-                tcptimequeue.add(tcpPacket.sec);
-                int f = tcptimequeue.average();
-                if (tcptimequeue.last() / (a * f + (1 - a) * flevel) >= 2) {
+                tcpTimeQueue.add(tcpPacket.sec);
+                int f = tcpTimeQueue.average();
+                if (tcpTimeQueue.last() / (syna * f + (1 - syna) * synlevel) >= 2) {
                     mp.setProtocol(1);
                     mp.setWarnType(TCP_SYN_DDOS);
                     mp.setSrcIp(tcpPacket.src_ip.toString());
@@ -244,9 +269,9 @@ public class PacketChecker extends Thread {
                     PacketHandler.catchWarn(mp);
                 }
                 IpTime iptime = new IpTime();
-                if (tcpmap.containsKey(tcpPacket.src_ip.toString())) {
+                if (tcpMap.containsKey(tcpPacket.src_ip.toString())) {
                     iptime.refreshtime = tcpPacket.sec;
-                    iptime = tcpmap.get(tcpPacket.src_ip.toString());
+                    iptime = tcpMap.get(tcpPacket.src_ip.toString());
                     iptime.ipqueue.offer(tcpPacket.sec);
                     iptime.ipport.put(new Integer(tcpPacket.dst_port), tcpPacket.sec);
                     if (iptime.ipqueue.size() > 250) {
@@ -260,13 +285,13 @@ public class PacketChecker extends Thread {
                             PacketHandler.catchWarn(mp);
                         }
                     }
-                    tcpmap.put(tcpPacket.src_ip.toString(), iptime);
+                    tcpMap.put(tcpPacket.src_ip.toString(), iptime);
                 } else {
                     iptime.ipport.put(new Integer(tcpPacket.dst_port), tcpPacket.sec);
                     iptime.createtime = tcpPacket.sec;
                     iptime.ipqueue = new LinkedList<>();
                     iptime.ipqueue.offer(tcpPacket.sec);
-                    tcpmap.put(tcpPacket.src_ip.toString(), iptime);
+                    tcpMap.put(tcpPacket.src_ip.toString(), iptime);
                 }
                 //ipport存入5分钟内试图连接的端口
                 for (Map.Entry<Integer, Long> entry : iptime.ipport.entrySet()) {
@@ -294,8 +319,8 @@ public class PacketChecker extends Thread {
     private void UDPChecker(UDPPacket udpPacket) {
         if (ifContain(udpPacket.dst_ip.toString()) && !ifInWhite(udpPacket.src_ip.toString())) {
             udpTimeQueue.add(udpPacket.sec);
-            int f2 = udpTimeQueue.average();
-            if (udpTimeQueue.last() / (a * f2 + (1 - a) * flevel) >= 2) {
+            int f = udpTimeQueue.average();
+            if (udpTimeQueue.last() / (udpa * f + (1 - udpa) * udplevel) >= 2) {
                 mp.setProtocol(2);
                 mp.setSrcIp(udpPacket.src_ip.toString());
                 mp.setWarnType(UDP_DDOS);
@@ -310,6 +335,7 @@ public class PacketChecker extends Thread {
                 udpiptime.ipport.put(new Integer(udpPacket.dst_port), udpPacket.sec);
                 if (udpiptime.ipqueue.size() > 250) {
                     udpiptime.ipqueue.poll();
+                    //设置
                     if (udpPacket.sec - udpiptime.ipqueue.peek() < 10) {
                         mp.setProtocol(2);
                         mp.setSrcIp(udpPacket.src_ip.toString());
@@ -330,6 +356,7 @@ public class PacketChecker extends Thread {
             for (Map.Entry<Integer, Long> entry : udpiptime.ipport.entrySet()) {
                 if (udpPacket.sec - entry.getValue() >= 5 * 60 * 60) udpiptime.ipport.remove(entry.getKey());
             }
+            //设置
             if (udpiptime.ipport.size() >= 500) {
                 mp.setProtocol(2);
                 mp.setSrcIp(udpPacket.src_ip.toString());
@@ -356,6 +383,40 @@ public class PacketChecker extends Thread {
                 mp.setWarnType(ICMP_PING);
                 mp.setWarningMsg("收到ICMP_ECHO报文，某机器在试图ping通该设备");
                 PacketHandler.catchWarn(mp);
+            }
+        }
+        if (ifContain(icmpPacket.dst_ip.toString()) && !ifInWhite(icmpPacket.src_ip.toString())) {
+            icmpTimeQueue.add(icmpPacket.sec);
+            int f = icmpTimeQueue.average();
+            if (icmpTimeQueue.last() / (icmpa * f + (1 - icmpa) * icmplevel) >= 2) {
+                mp.setProtocol(3);
+                mp.setSrcIp(icmpPacket.src_ip.toString());
+                mp.setWarnType(ICMP_DDOS);
+                mp.setWarningMsg("当前时段收到的ICMP数据包过多，疑似DDos攻击");
+                PacketHandler.catchWarn(mp);
+            }
+            IpTime icmpiptime = new IpTime();
+            if (icmpMap.containsKey(icmpPacket.src_ip.toString())) {
+                icmpiptime.refreshtime = icmpPacket.sec;
+                icmpiptime = icmpMap.get(icmpPacket.src_ip.toString());
+                icmpiptime.ipqueue.offer(icmpPacket.sec);
+                if (icmpiptime.ipqueue.size() > 250) {
+                    icmpiptime.ipqueue.poll();
+                    //设置
+                    if (icmpPacket.sec - icmpiptime.ipqueue.peek() < 10) {
+                        mp.setProtocol(3);
+                        mp.setSrcIp(icmpPacket.src_ip.toString());
+                        mp.setWarnType(ICMP_FLOOD);
+                        mp.setWarningMsg("来自此IP的ICMP数据包过多，疑似ICMP洪流攻击");
+                        PacketHandler.catchWarn(mp);
+                    }
+                }
+                icmpMap.put(icmpPacket.src_ip.toString(), icmpiptime);
+            } else {
+                icmpiptime.createtime = icmpPacket.sec;
+                icmpiptime.ipqueue = new LinkedList<>();
+                icmpiptime.ipqueue.offer(icmpPacket.sec);
+                icmpMap.put(icmpPacket.src_ip.toString(), icmpiptime);
             }
         }
     }
