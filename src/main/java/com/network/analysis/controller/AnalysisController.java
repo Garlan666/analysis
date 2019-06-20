@@ -60,13 +60,15 @@ public class AnalysisController {
     public Return getWhite(){return new Return<>(networkServer.getWhiteList());}
 
     @PostMapping(value = "addWhite")
-    public void addWhite(String ip){
+    public Return addWhite(String ip){
         networkServer.addWhite(ip);
+        return Return.SUCCESS;
     }
 
     @PostMapping(value = "removeWhite")
-    public void removeWhite(String ip){
+    public Return removeWhite(String ip){
         networkServer.removeWhite(ip);
+        return Return.SUCCESS;
     }
 
 }

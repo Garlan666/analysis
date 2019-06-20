@@ -29,7 +29,7 @@
 
             <ul class="Switch">
                 <li id="blance-title">
-                    <input type="checkbox"  id="blance" disabled="disabled"/>
+                    <input type="checkbox" id="blance" disabled="disabled"/>
                     混杂模式
                     <label for="blance"><em></em></label>
                 </li>
@@ -54,7 +54,22 @@
 <div id="warn">
     <span id="warn-title">警告列表</span>
     <input type="button" id="attack" value="发送数据包" onclick="window.open('attack.html')">
+    <input type="button" id="whitelist" value="白名单">
     <div id="warn-list">
+    </div>
+    <div id="white-list">
+        <div id="show-list">
+        </div>
+        <div class="ip-top">
+            <input class="ip">.
+            <input class="ip">.
+            <input class="ip">.
+            <input class="ip">
+        </div>
+        <div class="add-top">
+            <input type="button" value="添加" id="add-ip">
+            <input type="button" value="删除" id="remove-ip">
+        </div>
     </div>
 </div>
 

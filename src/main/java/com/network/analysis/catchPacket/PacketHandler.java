@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 
@@ -23,7 +24,7 @@ public class PacketHandler {
     public static int[] packetNumKind = new int[]{0, 0, 0, 0, 0};
     public static double packetLenTotal = 0;
     public static double[] packetLenKind = new double[]{0, 0, 0, 0, 0};
-    public static List<myPacket> warnPacketList = new ArrayList<>();//可疑数据包列表
+    public static HashMap<String,myPacket> msg=new HashMap<>();
     public static List<myPacket> warnMessageList=new ArrayList<>();//可疑消息列表
     public static PacketChecker packetChecker = new PacketChecker();//数据包检查线程
 
@@ -93,7 +94,8 @@ public class PacketHandler {
                 packetNumKind[i] = 0;
                 packetLenKind[i] = 0;
             }
-            warnPacketList.clear();
+            //释放内存
+
             return true;
         } else {
             return false;
@@ -128,11 +130,24 @@ public class PacketHandler {
         }
     }
 
+    public static void addMsg(myPacket myPacket){
+        String key=myPacket.getSrcIp()+':'+myPacket.getWarnType();
+        if(msg.containsKey(key)) {
+            if((myPacket.getPacket().sec-msg.get(key).getPacket().sec)>30) {
+                warnMessageList.add(myPacket);
+                msg.put(key,myPacket);
+            }
+        }
+        else {
+            warnMessageList.add(myPacket);
+            msg.put(key, myPacket);
+        }
+    }
 
     public static void catchWarn(myPacket mp){
         try {
             fileWriter.append(df.format(new Date(mp.getPacket().sec*1000L))+mp.getWarningMsg()+" :"+mp.getPacket().toString()+"\r\n");
-            warnPacketList.add(mp);
+            addMsg(mp);
         } catch (IOException e) {
             e.printStackTrace();
         }

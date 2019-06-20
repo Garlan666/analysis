@@ -2,12 +2,16 @@ package com.network.analysis.entity;
 
 import jpcap.packet.Packet;
 
+import java.net.InetAddress;
+
 /**
  * Created by Garlan on 2019/6/13.
  */
 public class myPacket {
     private int protocol;
+    private int warnType;
     private Packet packet;
+    private String srcIp;
 
     private String warningMsg;
 
@@ -43,4 +47,19 @@ public class myPacket {
         this.packet = packet;
     }
 
+    public int getWarnType() {
+        return warnType;
+    }
+
+    public void setWarnType(int warnType) {
+        this.warnType = warnType;
+    }
+
+    public String getSrcIp() {
+        return srcIp;
+    }
+
+    public void setSrcIp(String srcIp) {
+        this.srcIp = srcIp;
+    }
 }

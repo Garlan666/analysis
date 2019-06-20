@@ -42,7 +42,7 @@ function init() {
                     $('#instruction').append(`
                 <div><span>描述：${interfaceList[id].description}</span></div>
                 <div><span>名称：${interfaceList[id].name}</span></div>
-                <div><span>链路：${interfaceList[id].datalink_description +'&nbsp;&nbsp;'+ interfaceList[id].datalink_name}</span></div>
+                <div><span>链路：${interfaceList[id].datalink_description + '&nbsp;&nbsp;' + interfaceList[id].datalink_name}</span></div>
                 <div><span>地址：</br>${interfaceList[id].address}</span></div>
                 `);
                 }, 200);
@@ -124,6 +124,39 @@ function init() {
         }
     });
 
+    $('.ip').attr('maxlength', '3');
+    $('.ip').attr('oninput', 'value=value.replace(/[^\\d]/g,\'\');if(value>255)value=255;if(value<0)value=0');
+
+    $('#whitelist').click(function () {
+        if ($('#white-list').css("display") == "none") $('#white-list').show(200);
+        else $('#white-list').hide(200);
+    });
+
+
+    $('#add-ip').click(function () {
+        if ($('.ip').val() != "") {
+            var data = $('.ip').eq(0).val() + '.' + $('.ip').eq(1).val() + '.' + $('.ip').eq(2).val() + '.' + $('.ip').eq(3).val();
+            console.log(data);
+            addWhite({ip: data}, function (data) {
+                getwhitelist();
+                $('.ip').val("");
+            });
+        }
+    });
+    $('#remove-ip').click(function () {
+        if ($('.ip').val() != "") {
+            var data = $('.ip').eq(0).val() + '.' + $('.ip').eq(1).val() + '.' + $('.ip').eq(2).val() + '.' + $('.ip').eq(3).val();
+            console.log(data);
+            removeWhite({ip: data}, function (data) {
+                getwhitelist();
+                $('.ip').val("");
+            });
+        }
+
+
+    });
+    getwhitelist();
+
 
     //图表初始化
     PacketPerSecondChart = echarts.init(document.getElementById('chart1'));
@@ -144,6 +177,27 @@ function init() {
     PacketKindLenChart = echarts.init(document.getElementById('chart6'));
     PacketKindLenChart.setOption(chartOption6());
 
+}
+function ipliclick(i) {
+    $('.ipli').css("background", "#cccccc");
+    $('.ipli').eq(i).css("background", "#a09eff");
+    var iplist = $('.ipli').eq(i).html().toString().split('.');
+    for (var j = 0; j < 4; j++) {
+        $('.ip').eq(j).val(iplist[j]);
+    }
+};
+
+function getwhitelist() {
+    getWhite(function (data) {
+        $('#show-list').html("");
+        if (data.data != "") {
+            var whitelist = data.data;
+            console.log(whitelist);
+            for (var i = 0; i < whitelist.length; i++) {
+                $('#show-list').append(`<div class="ipli" onclick="ipliclick(${i})">${whitelist[i]}</div>`);
+            }
+        }
+    })
 }
 
 function startCatch(index) {
@@ -225,10 +279,10 @@ function showWarning() {
 
         switch (warningList[i].protocol) {
             case 1:
-                showTCP(warningList[i],ptime);
+                showTCP(warningList[i], ptime);
                 break;
             case 2:
-                showUDP(warningList[i],ptime);
+                showUDP(warningList[i], ptime);
                 break;
             case 3:
                 showICMP(warningList[i], ptime);
@@ -346,8 +400,8 @@ function showARP(wp, ptime) {
                 时间：<span>${ptime}</span>
             </div>
             <div>
-                 源地址：<span>${wp.packet.senderHardwareAddress+'/'+wp.packet.senderProtocolAddress}</span>  
-                 &nbsp;&nbsp;目的地址：<span>${wp.packet.targetHardwareAddress+'/'+wp.packet.targetProtocolAddress}</span>
+                 源地址：<span>${wp.packet.senderHardwareAddress + '/' + wp.packet.senderProtocolAddress}</span>  
+                 &nbsp;&nbsp;目的地址：<span>${wp.packet.targetHardwareAddress + '/' + wp.packet.targetProtocolAddress}</span>
             </div>
             ${htmlstr}
             <div>警告信息：<span>${wp.warningMsg}</span></div>

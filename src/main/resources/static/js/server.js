@@ -97,12 +97,12 @@ function submit(json) {
 }
 
 
-function getWhite(json,ReturnFun) {
+function getWhite(ReturnFun) {
     $.ajax({
         type: "POST",
-        url: "/sys/network/getWhiteList",
+        url: "/sys/network/getWhite",
         contentType: 'application/x-www-form-urlencoded;charset=utf-8',
-        data: json,
+        data:{},
         dataType: 'json',
         success: ReturnFun,
         error: function (e) {
