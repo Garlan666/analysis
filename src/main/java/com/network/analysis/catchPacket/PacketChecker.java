@@ -354,7 +354,7 @@ public class PacketChecker extends Thread {
 
 
     private void ICMPChecker(ICMPPacket icmpPacket) {
-        if (icmpPacket.len > 65535) {
+        if (icmpPacket.len > 421) {
             mp.setProtocol(3);
             mp.setSrcIp(icmpPacket.src_ip.toString());
             mp.setWarnType(ICMP_DEATH);

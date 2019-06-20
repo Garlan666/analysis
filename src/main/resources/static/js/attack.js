@@ -206,6 +206,7 @@ function getDesIp() {
         temp = '0';
     }
     desIp += temp;
+    return desIp;
 }
 
 function getSrcMac() {
