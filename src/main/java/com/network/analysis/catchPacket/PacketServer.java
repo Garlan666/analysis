@@ -58,7 +58,6 @@ public class PacketServer {
             packetHandler.startCapThread(jpcap);
             interfaceList.get(index).setOn(true);
             interfaceList.get(index).setPromisc(promisc);
-            System.out.println("开始抓取第" + index + "个卡口上的数据");
             return true;
         } catch (IOException e) {
             e.printStackTrace();

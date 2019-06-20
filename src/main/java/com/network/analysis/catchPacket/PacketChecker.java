@@ -26,43 +26,43 @@ public class PacketChecker extends Thread {
     private double a;    //平滑参数
 
 
-    private final int TCP_LAND=1;
-    private final int TCP_SYN_DDOS=2;
-    private final int SYN_FLOOD=3;
-    private final int TCP_PORT_SCAN=4;
-    private final int TCP_SCAN=5;
-    private final int UDP_DDOS=6;
-    private final int UDP_FLOOD=7;
-    private final int UDP_SCAN=8;
-    private final int ICMP_DEATH=9;
-    private final int ICMP_PING=10;
-    private final int ARP_CHEAT=11;
+    private final int TCP_LAND = 1;
+    private final int TCP_SYN_DDOS = 2;
+    private final int SYN_FLOOD = 3;
+    private final int TCP_PORT_SCAN = 4;
+    private final int TCP_SCAN = 5;
+    private final int UDP_DDOS = 6;
+    private final int UDP_FLOOD = 7;
+    private final int UDP_SCAN = 8;
+    private final int ICMP_DEATH = 9;
+    private final int ICMP_PING = 10;
+    private final int ARP_CHEAT = 11;
 
-    private ArrayList<String>whiteList=new ArrayList<>();
+    private ArrayList<String> whiteList = new ArrayList<>();
 
-    public ArrayList<String>getWhiteList(){
+    public ArrayList<String> getWhiteList() {
         return whiteList;
     }
-    public void addWhiteList(String ip){
-        int j=0;
-        for(int i=0;i<whiteList.size();i++){
-            if(!ip.equals(whiteList.get(i))) j++;
+
+    public void addWhiteList(String ip) {
+        int j = 0;
+        for (int i = 0; i < whiteList.size(); i++) {
+            if (!ip.equals(whiteList.get(i))) j++;
             else break;
         }
-        if(j==whiteList.size()) whiteList.add(ip);
+        if (j == whiteList.size()) whiteList.add(ip);
     }
 
-    public void removeWhite(String ip){
-        System.out.print(ip);
-        for(int i=0;i<whiteList.size();i++){
-            System.out.println(whiteList.get(i));
-            if(ip.equals(whiteList.get(i))){
+    public void removeWhite(String ip) {
+        for (int i = 0; i < whiteList.size(); i++) {
+            if (ip.equals(whiteList.get(i))) {
                 whiteList.remove(i);
                 return;
             }
         }
     }
-    private boolean ifInWhite(String ip){
+
+    private boolean ifInWhite(String ip) {
         for (int i = 0; i < whiteList.size(); i++) {
             if (ip.equals("/" + whiteList.get(i))) {
                 return true;
@@ -70,8 +70,6 @@ public class PacketChecker extends Thread {
         }
         return false;
     }
-
-
 
 
     @Override
@@ -194,7 +192,6 @@ public class PacketChecker extends Thread {
         HashMap<Integer, Long> ipport = new HashMap<>();
         long createtime = 0;//hash连接创建时间
         long refreshtime = 0;//上次刷新时间
-//        int min=400;
     }
 
     HashMap<String, IpTime> tcpmap = new HashMap<>();
@@ -254,14 +251,12 @@ public class PacketChecker extends Thread {
                     iptime.ipport.put(new Integer(tcpPacket.dst_port), tcpPacket.sec);
                     if (iptime.ipqueue.size() > 250) {
                         iptime.ipqueue.poll();
-//                        if(tcpPacket.sec-iptime.ipqueue.peek()<iptime.min)iptime.min=(int)(tcpPacket.sec-iptime.ipqueue.peek());
-//                        System.out.println(tcpPacket.src_ip+" "+iptime.min);
                         if (tcpPacket.sec - iptime.ipqueue.peek() < 10) {
                             //syn洪流报警
                             mp.setProtocol(1);
                             mp.setWarnType(SYN_FLOOD);
                             mp.setSrcIp(tcpPacket.src_ip.toString());
-                            mp.setWarningMsg("此IP的SYN请求过多，疑似SYN洪流攻击");//
+                            mp.setWarningMsg("此IP的SYN请求过多，疑似SYN洪流攻击");
                             PacketHandler.catchWarn(mp);
                         }
                     }
@@ -277,8 +272,7 @@ public class PacketChecker extends Thread {
                 for (Map.Entry<Integer, Long> entry : iptime.ipport.entrySet()) {
                     if (tcpPacket.sec - entry.getValue() >= 5 * 60 * 60) iptime.ipport.remove(entry.getKey());
                 }
-                System.out.println(tcpPacket.src_ip+" "+tcpPacket.dst_port+" "+iptime.ipport.size());
-                if(iptime.ipport.size()>=100){
+                if (iptime.ipport.size() >= 100) {
                     mp.setProtocol(1);
                     mp.setWarnType(TCP_PORT_SCAN);
                     mp.setSrcIp(tcpPacket.src_ip.toString());
@@ -295,12 +289,10 @@ public class PacketChecker extends Thread {
             }
 
         }
-//        mp.setProtocol(1);
-//        PacketHandler.catchWarn(mp);
     }
 
     private void UDPChecker(UDPPacket udpPacket) {
-        if (ifContain(udpPacket.dst_ip.toString())&&!ifInWhite(udpPacket.src_ip.toString())){
+        if (ifContain(udpPacket.dst_ip.toString()) && !ifInWhite(udpPacket.src_ip.toString())) {
             udpTimeQueue.add(udpPacket.sec);
             int f2 = udpTimeQueue.average();
             if (udpTimeQueue.last() / (a * f2 + (1 - a) * flevel) >= 2) {
@@ -315,13 +307,10 @@ public class PacketChecker extends Thread {
                 udpiptime.refreshtime = udpPacket.sec;
                 udpiptime = udpMap.get(udpPacket.src_ip.toString());
                 udpiptime.ipqueue.offer(udpPacket.sec);
-                udpiptime.ipport.put(new Integer(udpPacket.dst_port),udpPacket.sec);
+                udpiptime.ipport.put(new Integer(udpPacket.dst_port), udpPacket.sec);
                 if (udpiptime.ipqueue.size() > 250) {
                     udpiptime.ipqueue.poll();
-//                        if(tcpPacket.sec-iptime.ipqueue.peek()<iptime.min)iptime.min=(int)(tcpPacket.sec-iptime.ipqueue.peek());
-//                        System.out.println(tcpPacket.src_ip+" "+iptime.min);
                     if (udpPacket.sec - udpiptime.ipqueue.peek() < 10) {
-                        //udp洪流报警
                         mp.setProtocol(2);
                         mp.setSrcIp(udpPacket.src_ip.toString());
                         mp.setWarnType(UDP_FLOOD);
@@ -330,19 +319,18 @@ public class PacketChecker extends Thread {
                     }
                 }
                 udpMap.put(udpPacket.src_ip.toString(), udpiptime);
-            }
-            else {
-                udpiptime.ipport.put(new Integer(udpPacket.dst_port),udpPacket.sec);
-                udpiptime.createtime=udpPacket.sec;
+            } else {
+                udpiptime.ipport.put(new Integer(udpPacket.dst_port), udpPacket.sec);
+                udpiptime.createtime = udpPacket.sec;
                 udpiptime.ipqueue = new LinkedList<>();
                 udpiptime.ipqueue.offer(udpPacket.sec);
                 udpMap.put(udpPacket.src_ip.toString(), udpiptime);
             }
             //ipport存入5分钟内试图连接的端口
-            for (Map.Entry<Integer,Long> entry : udpiptime.ipport.entrySet()) {
-                if(udpPacket.sec-entry.getValue()>=5*60*60)udpiptime.ipport.remove(entry.getKey());
+            for (Map.Entry<Integer, Long> entry : udpiptime.ipport.entrySet()) {
+                if (udpPacket.sec - entry.getValue() >= 5 * 60 * 60) udpiptime.ipport.remove(entry.getKey());
             }
-            if(udpiptime.ipport.size()>=500){
+            if (udpiptime.ipport.size() >= 500) {
                 mp.setProtocol(2);
                 mp.setSrcIp(udpPacket.src_ip.toString());
                 mp.setWarnType(UDP_SCAN);
@@ -354,19 +342,21 @@ public class PacketChecker extends Thread {
 
 
     private void ICMPChecker(ICMPPacket icmpPacket) {
-        if (icmpPacket.len > 421) {
-            mp.setProtocol(3);
-            mp.setSrcIp(icmpPacket.src_ip.toString());
-            mp.setWarnType(ICMP_DEATH);
-            mp.setWarningMsg("收到一个异常的ICMP报文，有可能遭遇“死亡之ping”攻击");
-            PacketHandler.catchWarn(mp);
-        }
-        if(icmpPacket.type == 8 && ifContain(icmpPacket.dst_ip.toString())){
-            mp.setProtocol(3);
-            mp.setSrcIp(icmpPacket.src_ip.toString());
-            mp.setWarnType(ICMP_PING);
-            mp.setWarningMsg("收到一个ICMP_ECHO报文，某机器在试图ping通该设备");
-            PacketHandler.catchWarn(mp);
+        if (icmpPacket.type == 8) {
+            if (icmpPacket.len > 421) {
+                mp.setProtocol(3);
+                mp.setSrcIp(icmpPacket.src_ip.toString());
+                mp.setWarnType(ICMP_DEATH);
+                mp.setWarningMsg("收到异常的ICMP报文，有可能遭遇“死亡之ping”攻击");
+                PacketHandler.catchWarn(mp);
+            }
+            if (ifContain(icmpPacket.dst_ip.toString())) {
+                mp.setProtocol(3);
+                mp.setSrcIp(icmpPacket.src_ip.toString());
+                mp.setWarnType(ICMP_PING);
+                mp.setWarningMsg("收到ICMP_ECHO报文，某机器在试图ping通该设备");
+                PacketHandler.catchWarn(mp);
+            }
         }
     }
 

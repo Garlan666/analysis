@@ -136,7 +136,6 @@ function init() {
     $('#add-ip').click(function () {
         if ($('.ip').val() != "") {
             var data = $('.ip').eq(0).val() + '.' + $('.ip').eq(1).val() + '.' + $('.ip').eq(2).val() + '.' + $('.ip').eq(3).val();
-            console.log(data);
             addWhite({ip: data}, function (data) {
                 getwhitelist();
                 $('.ip').val("");
@@ -146,7 +145,6 @@ function init() {
     $('#remove-ip').click(function () {
         if ($('.ip').val() != "") {
             var data = $('.ip').eq(0).val() + '.' + $('.ip').eq(1).val() + '.' + $('.ip').eq(2).val() + '.' + $('.ip').eq(3).val();
-            console.log(data);
             removeWhite({ip: data}, function (data) {
                 getwhitelist();
                 $('.ip').val("");
@@ -192,7 +190,6 @@ function getwhitelist() {
         $('#show-list').html("");
         if (data.data != "") {
             var whitelist = data.data;
-            console.log(whitelist);
             for (var i = 0; i < whitelist.length; i++) {
                 $('#show-list').append(`<div class="ipli" onclick="ipliclick(${i})">${whitelist[i]}</div>`);
             }
@@ -263,7 +260,6 @@ function getWarning() {
         getWarningList(warningLen, function (data) {
             if (data.code == 100) {
                 warningList = data.data;
-                console.log(warningList);
                 showWarning();
             }
         });
@@ -428,7 +424,6 @@ function refresh() {
     if (ifFresh) {
         reFresh(function (data) {
             var packetInfo = data.data;
-            console.log(packetInfo);
 
 
             var totalNum = parseInt(packetInfo.total);

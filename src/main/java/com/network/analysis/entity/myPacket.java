@@ -62,4 +62,13 @@ public class myPacket {
     public void setSrcIp(String srcIp) {
         this.srcIp = srcIp;
     }
+
+
+    public myPacket(myPacket m) {
+        this.protocol = m.protocol;
+        this.warnType = m.warnType;
+        this.packet = m.packet;
+        this.srcIp = m.srcIp;
+        this.warningMsg = m.warningMsg;
+    }
 }

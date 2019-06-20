@@ -132,14 +132,15 @@ public class PacketHandler {
 
     public static void addMsg(myPacket myPacket){
         String key=myPacket.getSrcIp()+':'+myPacket.getWarnType();
+
         if(msg.containsKey(key)) {
             if((myPacket.getPacket().sec-msg.get(key).getPacket().sec)>30) {
-                warnMessageList.add(myPacket);
+                warnMessageList.add(new myPacket(myPacket));
                 msg.put(key,myPacket);
             }
         }
         else {
-            warnMessageList.add(myPacket);
+            warnMessageList.add(new myPacket(myPacket));
             msg.put(key, myPacket);
         }
     }
@@ -152,8 +153,5 @@ public class PacketHandler {
             e.printStackTrace();
         }
     }
-
-
-
 }
 
