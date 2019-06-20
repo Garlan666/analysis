@@ -6,8 +6,6 @@ import com.network.analysis.entity.PacketInfo;
 import com.network.analysis.entity.myPacket;
 import com.network.analysis.entity.netInterface;
 import com.network.analysis.server.NetworkServer;
-import jpcap.JpcapCaptor;
-import jpcap.NetworkInterface;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
