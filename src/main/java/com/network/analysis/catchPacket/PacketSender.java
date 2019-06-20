@@ -306,6 +306,8 @@ public class PacketSender extends Thread {
         ether.dst_mac = desmac;
         tcpPacket.datalink = ether;
 
+        System.out.println("Send TCP SYN to "+attack.getSrcIp() );
+
         int round=attack.getRound();
         while (round >= 0) {
             for (int i = 0; i < attack.getSpeed(); i++) {
